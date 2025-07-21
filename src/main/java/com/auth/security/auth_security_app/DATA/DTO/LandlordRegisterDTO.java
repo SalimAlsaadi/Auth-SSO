@@ -4,6 +4,7 @@ import jakarta.validation.constraints.*;
 import lombok.Data;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
 public class LandlordRegisterDTO {
@@ -35,5 +36,12 @@ public class LandlordRegisterDTO {
     private Boolean isActive = true; // optional (can be defaulted)
 
     private String password; // used in auth only, not persisted in landlord
+
+    private List<String> allowedClientIds; // ["frontend-client", "admin-dashboard" or any project id can this use access]
+
+    private String refType;
+
+    private String role;
+
 }
 

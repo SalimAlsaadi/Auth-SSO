@@ -3,6 +3,8 @@ package com.auth.security.auth_security_app.DATA.Entities;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
+
 @Entity
 @Table(name = "users")
 @Getter
@@ -31,4 +33,8 @@ public class UserEntity {
 
     @Column(name = "ref_type", length = 20)
     private String refType; // LANDLORD or TENANT
+
+    @Column(name="clientId")
+    private List<String> allowedClientIds; // e.g., ["frontend-client", "admin-dashboard"]
+
 }

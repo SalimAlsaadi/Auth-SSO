@@ -5,12 +5,18 @@ import com.auth.security.auth_security_app.DATA.Entities.UserEntity;
 import com.auth.security.auth_security_app.Repository.UserRepository;
 import com.auth.security.auth_security_app.Services.Interface.RegistrationServiceInterface;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.List;
+
 @Service
 public class RegistrationServiceImpl implements RegistrationServiceInterface {
+
+    @Value("${url.api}")
+    private String urlAPI;
 
     private final WebClient webClient;
     private final PasswordEncoder passwordEncoder;
@@ -24,9 +30,9 @@ public class RegistrationServiceImpl implements RegistrationServiceInterface {
     }
     public void registerLandlord(LandlordRegisterDTO dto) {
 
-        // Step 1: Call Resource Server to save landlord
+        // Step 1: Call Resource Server to save user DATA in main DB
         Long landlordId = webClient.post()
-                .uri("http://localhost:8008/api/landlords/register")
+                .uri(urlAPI)
                 .bodyValue(dto)
                 .retrieve()
                 .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
@@ -38,13 +44,14 @@ public class RegistrationServiceImpl implements RegistrationServiceInterface {
                 .bodyToMono(Long.class)
                 .block();
 
-        // Step 2: Save user in Auth DB
+        // Step 2: Save user credential in Auth DB
         UserEntity user = UserEntity.builder()
                 .username(dto.getEmail())
                 .password(passwordEncoder.encode(dto.getPassword()))
                 .refId(landlordId)
-                .refType("LANDLORD")
-                .role("LANDLORD")
+                .refType(dto.getRefType())
+                .role(dto.getRole())
+                .allowedClientIds((dto.getAllowedClientIds()))
                 .build();
 
         userRepository.save(user);
