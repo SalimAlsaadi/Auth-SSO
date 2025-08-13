@@ -10,7 +10,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class RegistrationServiceImpl implements RegistrationServiceInterface {
@@ -51,7 +53,7 @@ public class RegistrationServiceImpl implements RegistrationServiceInterface {
                 .refId(landlordId)
                 .refType(dto.getRefType())
                 .role(dto.getRole())
-                .allowedClientIds((dto.getAllowedClientIds()))
+                .allowedClientIds(dto.getAllowedClientIds() == null ? new java.util.HashSet<>() : new java.util.HashSet<>(dto.getAllowedClientIds()))
                 .build();
 
         userRepository.save(user);

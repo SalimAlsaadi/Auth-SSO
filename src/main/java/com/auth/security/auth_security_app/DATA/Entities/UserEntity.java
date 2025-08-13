@@ -3,7 +3,9 @@ package com.auth.security.auth_security_app.DATA.Entities;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -34,7 +36,10 @@ public class UserEntity {
     @Column(name = "ref_type", length = 20)
     private String refType; // LANDLORD or TENANT
 
-    @Column(name="clientId")
-    private List<String> allowedClientIds; // e.g., ["frontend-client", "admin-dashboard"]
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_allowed_clients", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "client_id", length = 100)
+    private Set<String> allowedClientIds = new HashSet<>();
 
 }

@@ -1,24 +1,23 @@
 package com.auth.security.auth_security_app.DATA.DTO;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
-import java.util.Date;
-import java.util.List;
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 public class LandlordRegisterDTO {
 
-    @NotBlank
-    @Size(max = 100)
+    @NotBlank @Size(max = 100)
     private String firstName;
 
-    @NotBlank
-    @Size(max = 100)
+    @NotBlank @Size(max = 100)
     private String lastName;
 
-    @NotBlank
-    @Email
+    @NotBlank @Email
     private String email;
 
     @NotBlank
@@ -26,22 +25,28 @@ public class LandlordRegisterDTO {
     private String phoneNumber;
 
     @PastOrPresent
-    private Date dateOfBirth;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private LocalDate dateOfBirth;
 
     private String address;
 
     @NotBlank
     private String nationalId;
 
-    private Boolean isActive = true; // optional (can be defaulted)
+    private Boolean isActive = true;
 
-    private String password; // used in auth only, not persisted in landlord
+    @NotBlank
+    @Size(min = 8, max = 100, message = "Password must be at least 8 characters")
+    private String password;
 
-    private List<String> allowedClientIds; // ["frontend-client", "admin-dashboard" or any project id can this use access]
+    // If empty or null => allow all clients (per your token customizer logic)
+    private Set<String> allowedClientIds = new HashSet<>();
 
+    // LANDLORD or TENANT
+    @NotBlank
     private String refType;
 
+    // LANDLORD (your UserDetailsService uses roles(user.getRole()))
+    @NotBlank
     private String role;
-
 }
-
