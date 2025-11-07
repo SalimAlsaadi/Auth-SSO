@@ -4,15 +4,12 @@ import com.auth.security.auth_security_app.DATA.DTO.LandlordRegisterDTO;
 import com.auth.security.auth_security_app.DATA.Entities.UserEntity;
 import com.auth.security.auth_security_app.Repository.UserRepository;
 import com.auth.security.auth_security_app.Services.Interface.RegistrationServiceInterface;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+
 
 @Service
 public class RegistrationServiceImpl implements RegistrationServiceInterface {
