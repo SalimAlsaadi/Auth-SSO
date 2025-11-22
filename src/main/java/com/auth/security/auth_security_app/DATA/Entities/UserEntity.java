@@ -28,17 +28,17 @@ public class UserEntity {
     @Column(nullable = false, length = 50)
     private String role;
 
-    // Refers to Landlord or Tenant ID from main app
     @Column(name = "ref_id")
     private Long refId;
 
     @Column(name = "ref_type", length = 20)
-    private String refType; // LANDLORD or TENANT
-
+    private String refType;
 
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "user_allowed_clients", joinColumns = @JoinColumn(name = "user_id"))
+    @CollectionTable(
+            name = "user_allowed_clients",
+            joinColumns = @JoinColumn(name = "user_id")
+    )
     @Column(name = "client_id", length = 100)
     private Set<String> allowedClientIds = new HashSet<>();
-
 }

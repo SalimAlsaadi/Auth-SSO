@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Data
-public class LandlordRegisterDTO {
+public class UserDTO {
 
     @NotBlank @Size(max = 100)
     private String firstName;
@@ -25,7 +25,7 @@ public class LandlordRegisterDTO {
     private String phoneNumber;
 
     @PastOrPresent
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate dateOfBirth;
 
     private String address;
@@ -36,17 +36,14 @@ public class LandlordRegisterDTO {
     private Boolean isActive = true;
 
     @NotBlank
-    @Size(min = 8, max = 100, message = "Password must be at least 8 characters")
+    @Size(min = 8)
     private String password;
 
-    // If empty or null => allow all clients (per your token customizer logic)
     private Set<String> allowedClientIds = new HashSet<>();
 
-    // LANDLORD or TENANT
     @NotBlank
     private String refType;
 
-    // LANDLORD (your UserDetailsService uses roles(user.getRole()))
     @NotBlank
     private String role;
 }

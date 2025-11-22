@@ -1,43 +1,45 @@
 package com.auth.security.auth_security_app.Configuration;
 
 import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.Resource;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 
+import java.security.Key;
 import java.security.KeyStore;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 
 @Configuration
-class SigningKeysConfig {
+public class SigningKeysConfig {
 
     @Bean
-    JWKSource<SecurityContext> jwkSource(
-            @Value("${security.keystore.location}") Resource ks,
+    public JWKSource<SecurityContext> jwkSource(
+            @Value("${security.keystore.location}") String location,
             @Value("${security.keystore.password}") String password,
-            @Value("${security.keystore.key-alias}") String alias) throws Exception {
+            @Value("${security.keystore.key-alias}") String alias
+    ) throws Exception {
 
-        KeyStore keyStore = KeyStore.getInstance(ks.getFilename().endsWith(".jks") ? "JKS" : "PKCS12");
-        try (var is = ks.getInputStream()) {
-            keyStore.load(is, password.toCharArray());
+        KeyStore ks = KeyStore.getInstance("PKCS12");
+        try (var is = new java.io.FileInputStream(location.replace("file:", ""))) {
+            ks.load(is, password.toCharArray());
         }
 
-        var key  = (java.security.Key) keyStore.getKey(alias, password.toCharArray());
-        var cert = (java.security.cert.X509Certificate) keyStore.getCertificate(alias);
+        Key key = ks.getKey(alias, password.toCharArray());
+        var cert = ks.getCertificate(alias);
 
-        var rsa = new com.nimbusds.jose.jwk.RSAKey.Builder((java.security.interfaces.RSAPublicKey) cert.getPublicKey())
-                .privateKey((java.security.interfaces.RSAPrivateKey) key)
-                .keyUse(com.nimbusds.jose.jwk.KeyUse.SIGNATURE)
-                .algorithm(com.nimbusds.jose.JWSAlgorithm.RS256)
-                .keyID(alias) // kid = alias
+        RSAKey rsaKey = new RSAKey.Builder((RSAPublicKey) cert.getPublicKey())
+                .privateKey((RSAPrivateKey) key)
+                .keyID(alias)
                 .build();
 
-        return new ImmutableJWKSet<>(new JWKSet(rsa));
+        return new ImmutableJWKSet<>(new JWKSet(rsaKey));
     }
 
     @Bean
@@ -45,4 +47,3 @@ class SigningKeysConfig {
         return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
     }
 }
-

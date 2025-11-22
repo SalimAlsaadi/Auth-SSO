@@ -1,70 +1,61 @@
-<!-- pom.xml -->
 <project>
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.5.3</version> <!-- keep for now; upgrade to 3.5.x latest later -->
-		<relativePath/>
+		<version>3.5.3</version>
 	</parent>
 
 	<groupId>com.auth.security</groupId>
 	<artifactId>auth_security_app</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>auth_security_app</name>
-	<description>Auth Security</description>
 
 	<properties>
 		<java.version>21</java.version>
-
-		<!-- SQL Server driver built for modern JVMs -->
-		<mssql.jdbc.version>12.8.1.jre17</mssql.jdbc.version>
-
 		<spring-authorization-server.version>1.5.3</spring-authorization-server.version>
-
 	</properties>
 
 	<dependencies>
-		<!-- Web (Servlet / Tomcat) -->
+
+		<!-- Web -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
-		<!-- Security -->
+		<!-- Spring Security -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 
+		<!-- Authorization Server -->
 		<dependency>
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-oauth2-authorization-server</artifactId>
 			<version>${spring-authorization-server.version}</version>
 		</dependency>
 
-		<!-- Resource Server (so http.oauth2ResourceServer(jwt()) works) -->
+		<!-- Resource server for JWT validation -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
 		</dependency>
 
-		<!-- Data + JPA -->
+		<!-- JPA + SQL Server -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
 
-		<!-- https://mvnrepository.com/artifact/com.microsoft.sqlserver/mssql-jdbc -->
 		<dependency>
 			<groupId>com.microsoft.sqlserver</groupId>
 			<artifactId>mssql-jdbc</artifactId>
 			<version>12.10.0.jre11</version>
-			<scope>compile</scope>
 		</dependency>
 
-		<!-- WebClient (reactive client only, no reactive server) -->
+		<!-- WebClient -->
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-webflux</artifactId>
@@ -94,32 +85,6 @@
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
 	</dependencies>
-
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-			</plugin>
-
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-enforcer-plugin</artifactId>
-				<version>3.5.0</version>
-				<executions>
-					<execution>
-						<id>enforce-dependency-convergence</id>
-						<goals><goal>enforce</goal></goals>
-						<configuration>
-							<rules>
-								<DependencyConvergence/>
-							</rules>
-							<fail>true</fail>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
 </project>

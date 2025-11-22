@@ -5,6 +5,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
 
+/**
+ * Central WebClient bean for cross-service communication.
+ */
 @Configuration
 public class WebClientConfig {
 
@@ -18,3 +21,4 @@ public class WebClientConfig {
                 .build();
     }
 }
+
