@@ -22,7 +22,6 @@ public class JwtCustomizer implements OAuth2TokenCustomizer<JwtEncodingContext> 
     @Override
     public void customize(JwtEncodingContext context) {
 
-        // Only customize the Access Token
         if (!"access_token".equals(context.getTokenType().getValue())) {
             return;
         }
@@ -35,13 +34,11 @@ public class JwtCustomizer implements OAuth2TokenCustomizer<JwtEncodingContext> 
 
         var claims = context.getClaims();
 
-        claims.claim("role", user.getRole());
         claims.claim("refType", user.getRefType());
         claims.claim("refId",  String.valueOf(user.getRefId()));
 
-        // SAFE collection (must use ArrayList)
-        List<String> safeRoles = new ArrayList<>();
-        safeRoles.add(user.getRole());
-        claims.claim("roles", safeRoles);
+        List<String> roleNames = new ArrayList<>();
+        user.getRoles().forEach(r -> roleNames.add(r.getRoleName()));
+        claims.claim("roles", roleNames);
     }
 }

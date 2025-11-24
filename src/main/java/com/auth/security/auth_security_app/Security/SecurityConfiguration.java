@@ -54,8 +54,11 @@ public class SecurityConfiguration {
         http.authenticationProvider(provider);
 
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/error", "/oauth2/**", "/admin/clients").permitAll()
-                .anyRequest().authenticated());
+                .requestMatchers("/", "/login", "/error", "/oauth2/**").permitAll()
+                .requestMatchers("/admin/**").hasRole("ADMIN")
+                .anyRequest().authenticated()
+        );
+
 
         http.formLogin(Customizer.withDefaults());
         http.csrf(csrf -> csrf.disable());

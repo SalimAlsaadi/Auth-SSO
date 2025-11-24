@@ -45,5 +45,9 @@ public class UserDTO {
     private String refType;
 
     @NotBlank
-    private String role;
+    private Set<String> roles;
+
+    @NotBlank
+    private String externalApiUrl;
+
 }

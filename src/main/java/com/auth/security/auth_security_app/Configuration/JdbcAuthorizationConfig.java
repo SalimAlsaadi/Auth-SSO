@@ -11,18 +11,12 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 public class JdbcAuthorizationConfig {
 
     @Bean
-    public JdbcOAuth2AuthorizationService authorizationService(
-            JdbcTemplate jdbcTemplate,
-            RegisteredClientRepository repo
-    ) {
+    public JdbcOAuth2AuthorizationService authorizationService(JdbcTemplate jdbcTemplate, RegisteredClientRepository repo) {
         return new JdbcOAuth2AuthorizationService(jdbcTemplate, repo);
     }
 
     @Bean
-    public JdbcOAuth2AuthorizationConsentService authorizationConsentService(
-            JdbcTemplate jdbcTemplate,
-            RegisteredClientRepository repo
-    ) {
+    public JdbcOAuth2AuthorizationConsentService authorizationConsentService(JdbcTemplate jdbcTemplate, RegisteredClientRepository repo) {
         return new JdbcOAuth2AuthorizationConsentService(jdbcTemplate, repo);
     }
 }

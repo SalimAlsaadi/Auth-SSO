@@ -1,5 +1,6 @@
 package com.auth.security.auth_security_app.DATA.Entities;
 
+import com.auth.security.auth_security_app.admin.entity.RoleEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,9 +26,6 @@ public class UserEntity {
     @Column(nullable = false, length = 255)
     private String password;
 
-    @Column(nullable = false, length = 50)
-    private String role;
-
     @Column(name = "ref_id")
     private Long refId;
 
@@ -41,4 +39,13 @@ public class UserEntity {
     )
     @Column(name = "client_id", length = 100)
     private Set<String> allowedClientIds = new HashSet<>();
+
+    
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "sas_user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private Set<RoleEntity> roles = new HashSet<>();
 }
