@@ -1,68 +1,115 @@
 package com.auth.security.auth_security_app.admin.service.Implementation;
 
-import com.auth.security.auth_security_app.admin.dto.RoleRequest;
+import com.auth.security.auth_security_app.admin.dto.roleDTO.RoleRequest;
+import com.auth.security.auth_security_app.admin.dto.roleDTO.RoleResponse;
 import com.auth.security.auth_security_app.admin.entity.PermissionEntity;
 import com.auth.security.auth_security_app.admin.entity.RoleEntity;
 import com.auth.security.auth_security_app.admin.repository.PermissionRepository;
 import com.auth.security.auth_security_app.admin.repository.RoleRepository;
 import com.auth.security.auth_security_app.admin.service.Interface.RoleService;
+
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Service
+@RequiredArgsConstructor
 public class RoleServiceImpl implements RoleService {
 
-    private final RoleRepository roleRepo;
-    private final PermissionRepository permRepo;
-
-    public RoleServiceImpl(RoleRepository roleRepo, PermissionRepository permRepo) {
-        this.roleRepo = roleRepo;
-        this.permRepo = permRepo;
-    }
+    private final RoleRepository roleRepository;
+    private final PermissionRepository permissionRepository;
 
     @Override
-    public RoleEntity createRole(RoleRequest request) {
-        Set<PermissionEntity> perms = new HashSet<>();
-        for (String key : request.permissions()) {
-            permRepo.findByPermKey(key).ifPresent(perms::add);
+    public RoleResponse create(RoleRequest request) {
+
+        if (roleRepository.existsByRoleName(request.getRoleName())) {
+            throw new RuntimeException("Role name already exists");
         }
 
-        RoleEntity role = RoleEntity.builder()
-                .roleName(request.roleName())
-                .description(request.description())
-                .permissions(perms)
-                .build();
+        RoleEntity role = new RoleEntity();
+        role.setRoleName(request.getRoleName());
+        role.setDescription(request.getDescription());
 
-        return roleRepo.save(role);
+        return toDTO(roleRepository.save(role));
     }
 
     @Override
-    public List<RoleEntity> getAllRoles() {
-        return roleRepo.findAll();
-    }
+    public RoleResponse update(Long roleId, RoleRequest request) {
 
-    @Override
-    public RoleEntity updateRole(Integer id, RoleRequest request) {
-        RoleEntity role = roleRepo.findById(id)
+        RoleEntity role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new RuntimeException("Role not found"));
 
-        role.setRoleName(request.roleName());
-        role.setDescription(request.description());
+        role.setRoleName(request.getRoleName());
+        role.setDescription(request.getDescription());
 
-        Set<PermissionEntity> perms = new HashSet<>();
-        for (String key : request.permissions()) {
-            permRepo.findByPermKey(key).ifPresent(perms::add);
-        }
-        role.setPermissions(perms);
-
-        return roleRepo.save(role);
+        return toDTO(roleRepository.save(role));
     }
 
     @Override
-    public void deleteRole(Integer id) {
-        roleRepo.deleteById(id);
+    public String delete(Long roleId) {
+        roleRepository.deleteById(roleId);
+        return "Role deleted";
+    }
+
+    @Override
+    public List<RoleResponse> getAll() {
+        return roleRepository.findAll()
+                .stream()
+                .map(this::toDTO)
+                .toList();
+    }
+
+    @Override
+    public RoleResponse getById(Long roleId) {
+        return roleRepository.findById(roleId)
+                .map(this::toDTO)
+                .orElseThrow(() -> new RuntimeException("Role not found"));
+    }
+
+    @Override
+    public RoleResponse addPermission(Long roleId, Long permissionId) {
+
+        RoleEntity role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new RuntimeException("Role not found"));
+
+        PermissionEntity perm = permissionRepository.findById(permissionId)
+                .orElseThrow(() -> new RuntimeException("Permission not found"));
+
+        role.getPermissions().add(perm);
+
+        return toDTO(roleRepository.save(role));
+    }
+
+    @Override
+    public RoleResponse removePermission(Long roleId, Long permissionId) {
+
+        RoleEntity role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new RuntimeException("Role not found"));
+
+        PermissionEntity perm = permissionRepository.findById(permissionId)
+                .orElseThrow(() -> new RuntimeException("Permission not found"));
+
+        role.getPermissions().remove(perm);
+
+        return toDTO(roleRepository.save(role));
+    }
+
+
+    private RoleResponse toDTO(RoleEntity role) {
+        RoleResponse dto = new RoleResponse();
+
+        dto.setId(role.getRoleId());
+        dto.setRoleName(role.getRoleName());
+        dto.setDescription(role.getDescription());
+
+        dto.setPermissions(
+                role.getPermissions()
+                        .stream()
+                        .map(PermissionEntity::getPermissionName)
+                        .toList()
+        );
+
+        return dto;
     }
 }

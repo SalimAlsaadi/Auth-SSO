@@ -1,4 +1,4 @@
-package com.auth.security.auth_security_app.DATA.DTO;
+package com.auth.security.auth_security_app.admin.dto.user;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.*;
@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Data
-public class UserDTO {
+public class UserPublicRegistrationDTO {
 
     @NotBlank @Size(max = 100)
     private String firstName;

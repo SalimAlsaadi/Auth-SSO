@@ -1,8 +1,10 @@
 package com.auth.security.auth_security_app.admin.controller;
 
-import com.auth.security.auth_security_app.admin.dto.PermissionRequest;
-import com.auth.security.auth_security_app.admin.entity.PermissionEntity;
+import com.auth.security.auth_security_app.admin.dto.permissionDTO.PermissionRequest;
+import com.auth.security.auth_security_app.admin.dto.permissionDTO.PermissionResponse;
 import com.auth.security.auth_security_app.admin.service.Interface.PermissionService;
+
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,21 +12,35 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/admin/permissions")
+@RequiredArgsConstructor
 public class PermissionController {
 
-    private final PermissionService service;
-
-    public PermissionController(PermissionService service) {
-        this.service = service;
-    }
+    private final PermissionService permissionService;
 
     @PostMapping
-    public ResponseEntity<PermissionEntity> create(@RequestBody PermissionRequest req) {
-        return ResponseEntity.ok(service.createPermission(req));
+    public ResponseEntity<PermissionResponse> create(@RequestBody PermissionRequest request) {
+        return ResponseEntity.ok(permissionService.create(request));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<PermissionResponse> update(
+            @PathVariable Long id,
+            @RequestBody PermissionRequest request) {
+        return ResponseEntity.ok(permissionService.update(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> delete(@PathVariable Long id) {
+        return ResponseEntity.ok(permissionService.delete(id));
     }
 
     @GetMapping
-    public ResponseEntity<List<PermissionEntity>> all() {
-        return ResponseEntity.ok(service.getAllPermissions());
+    public ResponseEntity<List<PermissionResponse>> getAll() {
+        return ResponseEntity.ok(permissionService.getAll());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<PermissionResponse> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(permissionService.getById(id));
     }
 }

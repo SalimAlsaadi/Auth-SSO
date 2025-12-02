@@ -1,7 +1,7 @@
 package com.auth.security.auth_security_app.Security;
 
-import com.auth.security.auth_security_app.DATA.Entities.UserEntity;
-import com.auth.security.auth_security_app.Repository.UserRepository;
+import com.auth.security.auth_security_app.admin.entity.UserEntity;
+import com.auth.security.auth_security_app.admin.repository.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
@@ -38,7 +38,7 @@ public class JwtCustomizer implements OAuth2TokenCustomizer<JwtEncodingContext> 
         claims.claim("refId",  String.valueOf(user.getRefId()));
 
         List<String> roleNames = new ArrayList<>();
-        user.getRoles().forEach(r -> roleNames.add(r.getRoleName()));
+        user.getRoles().forEach(r -> roleNames.add(r.getRole().getRoleName()));
         claims.claim("roles", roleNames);
     }
 }

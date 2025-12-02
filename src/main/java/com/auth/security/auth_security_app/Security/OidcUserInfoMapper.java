@@ -1,6 +1,6 @@
 package com.auth.security.auth_security_app.Security;
 
-import com.auth.security.auth_security_app.Repository.UserRepository;
+import com.auth.security.auth_security_app.admin.repository.UserRepository;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.core.oidc.StandardClaimNames;
@@ -42,7 +42,7 @@ public class OidcUserInfoMapper implements java.util.function.Function<OidcUserI
             claims.put("refId", u.getRefId());
 
             List<String> roles = new ArrayList<>();
-            u.getRoles().forEach(r -> roles.add(r.getRoleName()));
+            u.getRoles().forEach(r -> roles.add(r.getRole().getRoleName()));
             claims.put("roles", roles);
         });
 

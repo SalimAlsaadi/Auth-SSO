@@ -14,10 +14,11 @@ public class PermissionEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer permId;
+    private Long permissionId;
 
     @Column(nullable = false, unique = true, length = 100)
-    private String permKey;
+    private String permissionName;
 
+    @Column(length = 200)
     private String description;
 }

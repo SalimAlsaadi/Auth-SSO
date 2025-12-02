@@ -1,6 +1,6 @@
 package com.auth.security.auth_security_app.Security;
 
-import com.auth.security.auth_security_app.Services.Implementation.CustomUserDetailsService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -23,6 +23,31 @@ import org.springframework.security.web.authentication.LoginUrlAuthenticationEnt
 @EnableMethodSecurity
 public class SecurityConfiguration {
 
+    @Autowired
+    private CustomLoginSuccessHandler customRedirectSuccessHandler;
+
+
+    @Bean
+    @Order(0)
+    public SecurityFilterChain loginChain(HttpSecurity http,
+                                          CustomLoginSuccessHandler loginSuccessHandler) throws Exception {
+
+        http
+                .securityMatcher("/auth/login", "/css/**", "/js/**", "/static/**", "/perform_login")
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+
+                .formLogin(form -> form
+                        .loginPage("/auth/login")
+                        .loginProcessingUrl("/perform_login")
+                        .successHandler(loginSuccessHandler)
+                )
+
+                .csrf(csrf -> csrf.disable());
+
+        return http.build();
+    }
+
+
     @Bean
     @Order(1)
     SecurityFilterChain authServerChain(HttpSecurity http, OidcUserInfoMapper mapper) throws Exception {
@@ -32,10 +57,13 @@ public class SecurityConfiguration {
         http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
                 .oidc(oidc -> oidc.userInfoEndpoint(c -> c.userInfoMapper(mapper)));
 
-        http.exceptionHandling(e -> e.defaultAuthenticationEntryPointFor(
-                new LoginUrlAuthenticationEntryPoint("/login"), request -> true));
+        http.exceptionHandling(ex -> ex
+                .authenticationEntryPoint(
+                        new LoginUrlAuthenticationEntryPoint("/auth/login")
+                )
+        );
 
-        http.oauth2ResourceServer(resource -> resource.jwt());
+        http.oauth2ResourceServer(r -> r.jwt());
         http.csrf(csrf -> csrf.disable());
         http.cors(Customizer.withDefaults());
 
@@ -54,13 +82,13 @@ public class SecurityConfiguration {
         http.authenticationProvider(provider);
 
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/error", "/oauth2/**").permitAll()
+                .requestMatchers("/", "/css/**", "/js/**", "/error", "/oauth2/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
         );
 
 
-        http.formLogin(Customizer.withDefaults());
+
         http.csrf(csrf -> csrf.disable());
         http.cors(Customizer.withDefaults());
 

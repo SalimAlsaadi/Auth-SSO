@@ -5,6 +5,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface PermissionRepository extends JpaRepository<PermissionEntity, Integer> {
-    Optional<PermissionEntity> findByPermKey(String permKey);
+public interface PermissionRepository extends JpaRepository<PermissionEntity, Long> {
+
+    boolean existsByPermissionName(String permissionName);
+
+    Optional<PermissionEntity> findByPermissionName(String permissionName);
 }
