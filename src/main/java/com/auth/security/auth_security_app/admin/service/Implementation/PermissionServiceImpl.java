@@ -86,7 +86,7 @@ public class PermissionServiceImpl implements PermissionService {
     private PermissionResponse toDTO(PermissionEntity p) {
 
         PermissionResponse dto = new PermissionResponse();
-        dto.setId(p.getPermissionId());
+        dto.setId(p.getPerm_id());
         dto.setPermissionName(p.getPermissionName());
         dto.setDescription(p.getDescription());
 

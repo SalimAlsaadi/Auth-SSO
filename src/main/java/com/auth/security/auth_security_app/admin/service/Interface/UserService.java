@@ -1,8 +1,8 @@
 package com.auth.security.auth_security_app.admin.service.Interface;
 
-import com.auth.security.auth_security_app.admin.dto.user.UserPublicRegistrationDTO;
-import com.auth.security.auth_security_app.admin.dto.user.UserRequest;
-import com.auth.security.auth_security_app.admin.dto.user.UserResponse;
+import com.auth.security.auth_security_app.admin.dto.userDTO.UserPublicRegistrationDTO;
+import com.auth.security.auth_security_app.admin.dto.userDTO.UserRequest;
+import com.auth.security.auth_security_app.admin.dto.userDTO.UserResponse;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ public interface UserService {
 
     String resetPassword(Long userId, String newPassword);
 
-    String assignRoles(Long userId, List<Long> roleIds);
+    String assignRoles(Long userId, List<Integer> roleIds);
 
     String assignAllowedClients(Long userId, List<String> clientIds);
 

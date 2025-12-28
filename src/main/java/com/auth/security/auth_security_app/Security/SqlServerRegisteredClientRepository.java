@@ -51,6 +51,7 @@ public class SqlServerRegisteredClientRepository implements RegisteredClientRepo
         );
     }
 
+
     private void insert(RegisteredClient c) {
 
         Instant issuedAt = c.getClientIdIssuedAt() != null ? c.getClientIdIssuedAt() : Instant.now();

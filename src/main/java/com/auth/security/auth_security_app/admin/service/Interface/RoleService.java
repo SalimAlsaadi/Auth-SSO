@@ -9,15 +9,15 @@ public interface RoleService {
 
     RoleResponse create(RoleRequest request);
 
-    RoleResponse update(Long roleId, RoleRequest request);
+    RoleResponse update(Integer roleId, RoleRequest request);
 
-    String delete(Long roleId);
+    String delete(Integer roleId);
 
     List<RoleResponse> getAll();
 
-    RoleResponse getById(Long roleId);
+    RoleResponse getById(Integer roleId);
 
-    RoleResponse addPermission(Long roleId, Long permissionId);
+    RoleResponse addPermission(Integer roleId, Long permissionId);
 
-    RoleResponse removePermission(Long roleId, Long permissionId);
+    RoleResponse removePermission(Integer roleId, Long permissionId);
 }

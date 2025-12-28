@@ -1,4 +1,4 @@
-package com.auth.security.auth_security_app.admin.dto.user;
+package com.auth.security.auth_security_app.admin.dto.userDTO;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.*;

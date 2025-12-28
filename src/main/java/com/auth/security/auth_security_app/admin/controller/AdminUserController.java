@@ -1,7 +1,7 @@
 package com.auth.security.auth_security_app.admin.controller;
 
-import com.auth.security.auth_security_app.admin.dto.user.UserRequest;
-import com.auth.security.auth_security_app.admin.dto.user.UserResponse;
+import com.auth.security.auth_security_app.admin.dto.userDTO.UserRequest;
+import com.auth.security.auth_security_app.admin.dto.userDTO.UserResponse;
 import com.auth.security.auth_security_app.admin.service.Interface.UserService;
 
 import lombok.RequiredArgsConstructor;

@@ -1,16 +1,18 @@
 package com.auth.security.auth_security_app.admin.service.Implementation;
 
-import com.auth.security.auth_security_app.admin.dto.user.UserPublicRegistrationDTO;
-import com.auth.security.auth_security_app.admin.dto.user.UserRequest;
-import com.auth.security.auth_security_app.admin.dto.user.UserResponse;
+import com.auth.security.auth_security_app.admin.dto.userDTO.UserPublicRegistrationDTO;
+import com.auth.security.auth_security_app.admin.dto.userDTO.UserRequest;
+import com.auth.security.auth_security_app.admin.dto.userDTO.UserResponse;
 
 import com.auth.security.auth_security_app.admin.entity.*;
 import com.auth.security.auth_security_app.admin.repository.*;
 
+import com.auth.security.auth_security_app.admin.service.Interface.AuditLogService;
 import com.auth.security.auth_security_app.admin.service.Interface.UserService;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -35,14 +37,14 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     private final UserAllowedClientRepository allowedClientRepository;
     private final PasswordEncoder encoder;
     private final WebClient webClient;
-
+    private final AuditLogService auditLogService;
     /* =============================================================
      *  1) USER AUTHENTICATION (Login)
      * ============================================================= */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
-        UserEntity user = userRepository.findByUsername(username)
+        UserEntity user = userRepository.findByUsernameWithRoles(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         List<GrantedAuthority> authorities = new ArrayList<>();
@@ -100,12 +102,23 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         // D) Assign Allowed Clients
         assignAllowedClients(saved.getId(), dto.getAllowedClientIds().stream().toList());
 
+
+        auditLogService.log(
+                currentUserId(),
+                "USER_CREATE",
+                "User",
+                saved.getId().toString(),
+                "Created user: " + saved.getUsername()
+        );
+
         return getById(saved.getId());
+
+
     }
 
     // Map role names → DB IDs
-    private List<Long> getRoleIdsFromStrings(Set<String> roleNames) {
-        List<Long> roleIds = new ArrayList<>();
+    private List<Integer> getRoleIdsFromStrings(Set<String> roleNames) {
+        List<Integer> roleIds = new ArrayList<>();
 
         for (String name : roleNames) {
             RoleEntity role = roleRepository.findByRoleName(name)
@@ -141,6 +154,14 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         assignRoles(saved.getId(), request.getRoleIds());
         assignAllowedClients(saved.getId(), request.getAllowedClients());
 
+        auditLogService.log(
+                currentUserId(),
+                "USER_CREATE",
+                "User",
+                saved.getId().toString(),
+                "Created user: " + saved.getUsername()
+        );
+
         return getById(saved.getId());
     }
 
@@ -164,6 +185,14 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
         assignRoles(userId, request.getRoleIds());
         assignAllowedClients(userId, request.getAllowedClients());
+
+        auditLogService.log(
+                currentUserId(),
+                "USER_UPDATE",
+                "User",
+                user.getId().toString(),
+                "Updated user details"
+        );
 
         return getById(userId);
     }
@@ -221,18 +250,27 @@ public class UserServiceImpl implements UserService, UserDetailsService {
      * ============================================================= */
 
     @Override
-    public String assignRoles(Long userId, List<Long> roleIds) {
+    public String assignRoles(Long userId, List<Integer> roleIds) {
 
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         userRoleRepository.deleteByUser(user);
 
-        for (Long roleId : roleIds) {
+        for (Integer roleId : roleIds) {
             RoleEntity role = roleRepository.findById(roleId)
                     .orElseThrow(() -> new RuntimeException("Role not found"));
 
             userRoleRepository.save(new UserRoleEntity(null, user, role));
+
+            auditLogService.log(
+                    currentUserId(),
+                    "ROLE_ASSIGN",
+                    "User",
+                    userId.toString(),
+                    "Assigned roles: " + roleId
+            );
+
         }
         return "Roles updated";
     }
@@ -284,4 +322,12 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
         return dto;
     }
+
+    private Long currentUserId() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByUsername(username)
+                .map(UserEntity::getId)
+                .orElse(null);
+    }
+
 }

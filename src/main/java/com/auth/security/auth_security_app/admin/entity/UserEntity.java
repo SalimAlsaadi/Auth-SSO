@@ -31,10 +31,11 @@ public class UserEntity {
     @Column(name = "ref_type", length = 20)
     private String refType;
 
-    @Column(name = "isEnable")
+    @Column(name = "is_enable")
     private boolean enabled;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<UserRoleEntity> roles = new HashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -29,7 +29,7 @@ public class RoleController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('SAS_ADMIN')")
     public ResponseEntity<RoleResponse> update(
-            @PathVariable Long id,
+            @PathVariable Integer id,
             @RequestBody RoleRequest request) {
         return ResponseEntity.ok(roleService.update(id, request));
     }
@@ -37,7 +37,7 @@ public class RoleController {
     // Delete Role
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SAS_ADMIN')")
-    public ResponseEntity<String> delete(@PathVariable Long id) {
+    public ResponseEntity<String> delete(@PathVariable Integer id) {
         return ResponseEntity.ok(roleService.delete(id));
     }
 
@@ -50,7 +50,7 @@ public class RoleController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('SAS_ADMIN')")
-    public ResponseEntity<RoleResponse> getById(@PathVariable Long id) {
+    public ResponseEntity<RoleResponse> getById(@PathVariable Integer id) {
         return ResponseEntity.ok(roleService.getById(id));
     }
 
@@ -58,7 +58,7 @@ public class RoleController {
     @PostMapping("/{roleId}/permissions/{permissionId}")
     @PreAuthorize("hasRole('SAS_ADMIN')")
     public ResponseEntity<RoleResponse> addPermission(
-            @PathVariable Long roleId,
+            @PathVariable Integer roleId,
             @PathVariable Long permissionId) {
         return ResponseEntity.ok(roleService.addPermission(roleId, permissionId));
     }
@@ -67,7 +67,7 @@ public class RoleController {
     @DeleteMapping("/{roleId}/permissions/{permissionId}")
     @PreAuthorize("hasRole('SAS_ADMIN')")
     public ResponseEntity<RoleResponse> removePermission(
-            @PathVariable Long roleId,
+            @PathVariable Integer roleId,
             @PathVariable Long permissionId) {
         return ResponseEntity.ok(roleService.removePermission(roleId, permissionId));
     }

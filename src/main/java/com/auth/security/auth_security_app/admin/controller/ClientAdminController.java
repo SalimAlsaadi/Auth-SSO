@@ -1,7 +1,8 @@
-package com.auth.security.auth_security_app.Controller;
+package com.auth.security.auth_security_app.admin.controller;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -19,8 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/admin/clients")
-@PreAuthorize("permitAll()")
+@RequestMapping("/admin/client-management")
 public class ClientAdminController {
 
     private final RegisteredClientRepository repo;

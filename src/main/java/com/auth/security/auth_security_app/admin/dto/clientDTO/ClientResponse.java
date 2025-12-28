@@ -1,4 +1,4 @@
-package com.auth.security.auth_security_app.admin.dto.client;
+package com.auth.security.auth_security_app.admin.dto.clientDTO;
 
 import lombok.Data;
 import java.util.List;

@@ -17,18 +17,13 @@ public class RoleEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long roleId;
+    private Integer roleId;
 
     @Column(nullable = false, unique = true, length = 100)
     private String roleName;
 
     private String description;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "sas_role_permissions",
-            joinColumns = @JoinColumn(name = "role_id"),
-            inverseJoinColumns = @JoinColumn(name = "perm_id")
-    )
-    private Set<PermissionEntity> permissions = new HashSet<>();
+    @OneToMany(mappedBy = "role", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<RolePermissionEntity> rolePermissions = new HashSet<>();
 }

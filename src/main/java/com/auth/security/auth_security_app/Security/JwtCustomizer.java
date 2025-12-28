@@ -2,6 +2,7 @@ package com.auth.security.auth_security_app.Security;
 
 import com.auth.security.auth_security_app.admin.entity.UserEntity;
 import com.auth.security.auth_security_app.admin.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
@@ -19,6 +20,7 @@ public class JwtCustomizer implements OAuth2TokenCustomizer<JwtEncodingContext> 
         this.users = users;
     }
 
+    @Transactional
     @Override
     public void customize(JwtEncodingContext context) {
 
@@ -36,6 +38,7 @@ public class JwtCustomizer implements OAuth2TokenCustomizer<JwtEncodingContext> 
 
         claims.claim("refType", user.getRefType());
         claims.claim("refId",  String.valueOf(user.getRefId()));
+        claims.claim("user", username);
 
         List<String> roleNames = new ArrayList<>();
         user.getRoles().forEach(r -> roleNames.add(r.getRole().getRoleName()));

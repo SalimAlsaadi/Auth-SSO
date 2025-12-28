@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class PermissionResponse {
 
-    private Long id;
+    private Integer id;
     private String permissionName;
     private String description;
 }

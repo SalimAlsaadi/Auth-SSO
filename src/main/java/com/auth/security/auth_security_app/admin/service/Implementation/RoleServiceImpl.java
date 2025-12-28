@@ -4,11 +4,16 @@ import com.auth.security.auth_security_app.admin.dto.roleDTO.RoleRequest;
 import com.auth.security.auth_security_app.admin.dto.roleDTO.RoleResponse;
 import com.auth.security.auth_security_app.admin.entity.PermissionEntity;
 import com.auth.security.auth_security_app.admin.entity.RoleEntity;
+import com.auth.security.auth_security_app.admin.entity.RolePermissionEntity;
+import com.auth.security.auth_security_app.admin.entity.UserEntity;
 import com.auth.security.auth_security_app.admin.repository.PermissionRepository;
 import com.auth.security.auth_security_app.admin.repository.RoleRepository;
+import com.auth.security.auth_security_app.admin.repository.UserRepository;
+import com.auth.security.auth_security_app.admin.service.Interface.AuditLogService;
 import com.auth.security.auth_security_app.admin.service.Interface.RoleService;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,6 +24,9 @@ public class RoleServiceImpl implements RoleService {
 
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
+    private final UserRepository userRepository;
+    private final AuditLogService auditLogService;
+
 
     @Override
     public RoleResponse create(RoleRequest request) {
@@ -31,11 +39,21 @@ public class RoleServiceImpl implements RoleService {
         role.setRoleName(request.getRoleName());
         role.setDescription(request.getDescription());
 
-        return toDTO(roleRepository.save(role));
+        RoleResponse roleResponse=toDTO(roleRepository.save(role));
+        auditLogService.log(
+                currentUserId(),
+                "ROLE_ASSIGN",
+                "ROLE",
+                roleResponse.getId().toString(),
+                "Assigned roles: " + roleResponse.getRoleName()
+        );
+
+
+        return roleResponse;
     }
 
     @Override
-    public RoleResponse update(Long roleId, RoleRequest request) {
+    public RoleResponse update(Integer roleId, RoleRequest request) {
 
         RoleEntity role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new RuntimeException("Role not found"));
@@ -47,7 +65,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public String delete(Long roleId) {
+    public String delete(Integer roleId) {
         roleRepository.deleteById(roleId);
         return "Role deleted";
     }
@@ -61,14 +79,14 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public RoleResponse getById(Long roleId) {
+    public RoleResponse getById(Integer roleId) {
         return roleRepository.findById(roleId)
                 .map(this::toDTO)
                 .orElseThrow(() -> new RuntimeException("Role not found"));
     }
 
     @Override
-    public RoleResponse addPermission(Long roleId, Long permissionId) {
+    public RoleResponse addPermission(Integer roleId, Long permissionId) {
 
         RoleEntity role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new RuntimeException("Role not found"));
@@ -76,24 +94,55 @@ public class RoleServiceImpl implements RoleService {
         PermissionEntity perm = permissionRepository.findById(permissionId)
                 .orElseThrow(() -> new RuntimeException("Permission not found"));
 
-        role.getPermissions().add(perm);
+        boolean exists = role.getRolePermissions().stream()
+                .anyMatch(rp -> rp.getPermission().getPerm_id().equals(permissionId));
+
+        if (exists) {
+            throw new RuntimeException("Permission already assigned to role");
+        }
+
+        RolePermissionEntity rp = new RolePermissionEntity();
+        rp.setRole(role);
+        rp.setPermission(perm);
+
+        role.getRolePermissions().add(rp);
+
+        auditLogService.log(
+                currentUserId(),
+                "PERMISSION_ADD",
+                "ROLE",
+                roleId.toString(),
+                "Added permission " + permissionId
+        );
 
         return toDTO(roleRepository.save(role));
     }
+
 
     @Override
-    public RoleResponse removePermission(Long roleId, Long permissionId) {
+    public RoleResponse removePermission(Integer roleId, Long permissionId) {
 
         RoleEntity role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new RuntimeException("Role not found"));
 
-        PermissionEntity perm = permissionRepository.findById(permissionId)
-                .orElseThrow(() -> new RuntimeException("Permission not found"));
+        RolePermissionEntity target = role.getRolePermissions().stream()
+                .filter(rp -> rp.getPermission().getPerm_id().equals(permissionId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Permission not assigned to role"));
 
-        role.getPermissions().remove(perm);
+        role.getRolePermissions().remove(target);
+
+        auditLogService.log(
+                currentUserId(),
+                "PERMISSION_REMOVE",
+                "ROLE",
+                roleId.toString(),
+                "Removed permission " + permissionId
+        );
 
         return toDTO(roleRepository.save(role));
     }
+
 
 
     private RoleResponse toDTO(RoleEntity role) {
@@ -104,12 +153,21 @@ public class RoleServiceImpl implements RoleService {
         dto.setDescription(role.getDescription());
 
         dto.setPermissions(
-                role.getPermissions()
-                        .stream()
-                        .map(PermissionEntity::getPermissionName)
+                role.getRolePermissions().stream()
+                        .map(RolePermissionEntity::getPermission)
                         .toList()
         );
 
         return dto;
     }
+
+
+    //log helper
+    private Long currentUserId() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByUsername(username)
+                .map(UserEntity::getId)
+                .orElse(null);
+    }
+
 }

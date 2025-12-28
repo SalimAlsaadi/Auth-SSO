@@ -3,38 +3,34 @@ package com.auth.security.auth_security_app.Security;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
 @Component
 public class CustomLoginSuccessHandler implements AuthenticationSuccessHandler {
-    private static final String ADMIN_ROLE = "ROLE_SAS_ADMIN";
+
+    private final HttpSessionRequestCache requestCache = new HttpSessionRequestCache();
 
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+    public void onAuthenticationSuccess(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            org.springframework.security.core.Authentication authentication
+    ) throws IOException, ServletException {
 
-        boolean isAdmin = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).anyMatch(role -> role.equals(ADMIN_ROLE));
+        // 1️⃣ Try to restore saved OAuth2 request (VERY IMPORTANT)
+        var saved = requestCache.getRequest(request, response);
 
-        if (isAdmin) {
-            response.sendRedirect("/sas-admin/dashboard");
-
-        } else {
-            String redirectUri = (String) request.getSession()
-                    .getAttribute("SPRING_SECURITY_SAVED_REQUEST");
-
-            if (redirectUri != null) {
-                // Spring handle it normally
-                response.sendRedirect("/");
-            } else {
-                response.sendRedirect("/");
-            }
+        if (saved != null) {
+            // Continue OAuth2 Authorization Code flow
+            response.sendRedirect(saved.getRedirectUrl());
+            return;
         }
 
+        // 2️⃣ If no saved request, fallback to normal login
+        response.sendRedirect("/");  // admin dashboard for SAS
     }
-
 }
-
