@@ -39,6 +39,6 @@ public class UserEntity {
     private Set<UserRoleEntity> roles = new HashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<UserAllowedClientEntity> allowedClients = new HashSet<>();
+    private Set<UserClientEntity> clients = new HashSet<>();
 
 }

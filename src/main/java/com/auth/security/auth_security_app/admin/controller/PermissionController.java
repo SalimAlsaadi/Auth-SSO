@@ -1,7 +1,7 @@
 package com.auth.security.auth_security_app.admin.controller;
 
-import com.auth.security.auth_security_app.admin.dto.permissionDTO.PermissionRequest;
-import com.auth.security.auth_security_app.admin.dto.permissionDTO.PermissionResponse;
+import com.auth.security.auth_security_app.admin.dto.permissionDTO.PermissionRequestDTO;
+import com.auth.security.auth_security_app.admin.dto.permissionDTO.PermissionResponseDTO;
 import com.auth.security.auth_security_app.admin.service.Interface.PermissionService;
 
 import lombok.RequiredArgsConstructor;
@@ -18,14 +18,14 @@ public class PermissionController {
     private final PermissionService permissionService;
 
     @PostMapping
-    public ResponseEntity<PermissionResponse> create(@RequestBody PermissionRequest request) {
+    public ResponseEntity<PermissionResponseDTO> create(@RequestBody PermissionRequestDTO request) {
         return ResponseEntity.ok(permissionService.create(request));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PermissionResponse> update(
+    public ResponseEntity<PermissionResponseDTO> update(
             @PathVariable Long id,
-            @RequestBody PermissionRequest request) {
+            @RequestBody PermissionRequestDTO request) {
         return ResponseEntity.ok(permissionService.update(id, request));
     }
 
@@ -35,12 +35,12 @@ public class PermissionController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PermissionResponse>> getAll() {
+    public ResponseEntity<List<PermissionResponseDTO>> getAll() {
         return ResponseEntity.ok(permissionService.getAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PermissionResponse> getById(@PathVariable Long id) {
+    public ResponseEntity<PermissionResponseDTO> getById(@PathVariable Long id) {
         return ResponseEntity.ok(permissionService.getById(id));
     }
 }

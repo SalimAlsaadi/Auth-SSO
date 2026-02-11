@@ -1,7 +1,7 @@
 package com.auth.security.auth_security_app.admin.controller;
 
-import com.auth.security.auth_security_app.admin.dto.roleDTO.RoleRequest;
-import com.auth.security.auth_security_app.admin.dto.roleDTO.RoleResponse;
+import com.auth.security.auth_security_app.admin.dto.roleDTO.RoleRequestDTO;
+import com.auth.security.auth_security_app.admin.dto.roleDTO.RoleResponseDTO;
 import com.auth.security.auth_security_app.admin.service.Interface.RoleService;
 
 import lombok.RequiredArgsConstructor;
@@ -21,16 +21,16 @@ public class RoleController {
     // Create Role
     @PostMapping
     @PreAuthorize("hasRole('SAS_ADMIN')")
-    public ResponseEntity<RoleResponse> create(@RequestBody RoleRequest request) {
+    public ResponseEntity<RoleResponseDTO> create(@RequestBody RoleRequestDTO request) {
         return ResponseEntity.ok(roleService.create(request));
     }
 
     // Update Role
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('SAS_ADMIN')")
-    public ResponseEntity<RoleResponse> update(
+    public ResponseEntity<RoleResponseDTO> update(
             @PathVariable Integer id,
-            @RequestBody RoleRequest request) {
+            @RequestBody RoleRequestDTO request) {
         return ResponseEntity.ok(roleService.update(id, request));
     }
 
@@ -44,20 +44,20 @@ public class RoleController {
     // Get All Roles
     @GetMapping
     @PreAuthorize("hasRole('SAS_ADMIN')")
-    public ResponseEntity<List<RoleResponse>> getAll() {
+    public ResponseEntity<List<RoleResponseDTO>> getAll() {
         return ResponseEntity.ok(roleService.getAll());
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('SAS_ADMIN')")
-    public ResponseEntity<RoleResponse> getById(@PathVariable Integer id) {
+    public ResponseEntity<RoleResponseDTO> getById(@PathVariable Integer id) {
         return ResponseEntity.ok(roleService.getById(id));
     }
 
     // Assign Permission
     @PostMapping("/{roleId}/permissions/{permissionId}")
     @PreAuthorize("hasRole('SAS_ADMIN')")
-    public ResponseEntity<RoleResponse> addPermission(
+    public ResponseEntity<RoleResponseDTO> addPermission(
             @PathVariable Integer roleId,
             @PathVariable Long permissionId) {
         return ResponseEntity.ok(roleService.addPermission(roleId, permissionId));
@@ -66,7 +66,7 @@ public class RoleController {
     // Remove Permission
     @DeleteMapping("/{roleId}/permissions/{permissionId}")
     @PreAuthorize("hasRole('SAS_ADMIN')")
-    public ResponseEntity<RoleResponse> removePermission(
+    public ResponseEntity<RoleResponseDTO> removePermission(
             @PathVariable Integer roleId,
             @PathVariable Long permissionId) {
         return ResponseEntity.ok(roleService.removePermission(roleId, permissionId));

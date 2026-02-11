@@ -4,8 +4,8 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class ClientResponse {
-    private String id;
+public class ClientResponseDTO {
+    private Integer id;
     private String clientId;
     private String clientName;
 
@@ -22,4 +22,8 @@ public class ClientResponse {
     private long accessTokenTTL;
     private long refreshTokenTTL;
     private boolean reuseRefreshTokens;
+
+    private String clientCode;
+    private String clientDescription;
+
 }

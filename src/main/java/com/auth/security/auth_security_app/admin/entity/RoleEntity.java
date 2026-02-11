@@ -1,5 +1,6 @@
 package com.auth.security.auth_security_app.admin.entity;
 
+import com.auth.security.auth_security_app.admin.superClassBaseEntity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,7 +14,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RoleEntity {
+public class RoleEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

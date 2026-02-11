@@ -1,7 +1,8 @@
 package com.auth.security.auth_security_app.admin.controller;
 
-import com.auth.security.auth_security_app.admin.dto.clientDTO.ClientRequest;
-import com.auth.security.auth_security_app.admin.dto.clientDTO.ClientResponse;
+import com.auth.security.auth_security_app.admin.dto.clientDTO.ClientIdDTO;
+import com.auth.security.auth_security_app.admin.dto.clientDTO.ClientRequestDTO;
+import com.auth.security.auth_security_app.admin.dto.clientDTO.ClientResponseDTO;
 import com.auth.security.auth_security_app.admin.service.Interface.ClientService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -13,30 +14,30 @@ import java.util.List;
 @RestController
 @RequestMapping("/admin/clients")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('SAS_ADMIN')")
+//@PreAuthorize("hasRole('SAS_ADMIN')")
 public class ClientController {
 
     private final ClientService clientService;
 
-    @PostMapping
-    public ResponseEntity<ClientResponse> create(@RequestBody ClientRequest request) {
+    @PostMapping("/createClient")
+    public ResponseEntity<ClientResponseDTO> create(@RequestBody ClientRequestDTO request) {
         return ResponseEntity.ok(clientService.create(request));
     }
 
-    @GetMapping
-    public ResponseEntity<List<ClientResponse>> getAll() {
+    @PostMapping("/getAllClients")
+    public ResponseEntity<List<ClientResponseDTO>> getAll() {
         return ResponseEntity.ok(clientService.getAll());
     }
 
-    @GetMapping("/{clientId}")
-    public ResponseEntity<ClientResponse> getById(@PathVariable String clientId) {
-        return ResponseEntity.ok(clientService.getById(clientId));
+    @PostMapping("/{clientId}")
+    public ResponseEntity<ClientResponseDTO> getById(@RequestBody ClientIdDTO clientId) {
+        return ResponseEntity.ok(clientService.getById(clientId.getId()));
     }
 
     @PutMapping("/{clientId}")
-    public ResponseEntity<ClientResponse> update(
+    public ResponseEntity<ClientResponseDTO> update(
             @PathVariable String clientId,
-            @RequestBody ClientRequest request) {
+            @RequestBody ClientRequestDTO request) {
         return ResponseEntity.ok(clientService.update(clientId, request));
     }
 

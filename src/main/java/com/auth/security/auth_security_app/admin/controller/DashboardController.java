@@ -1,6 +1,6 @@
 package com.auth.security.auth_security_app.admin.controller;
 
-import com.auth.security.auth_security_app.admin.dto.dashboardDTO.DashboardResponse;
+import com.auth.security.auth_security_app.admin.dto.dashboardDTO.DashboardResponseDTO;
 import com.auth.security.auth_security_app.admin.service.Interface.DashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +18,7 @@ public class DashboardController {
 
     @GetMapping
     @PreAuthorize("hasRole('SAS_ADMIN")
-    public ResponseEntity<DashboardResponse> getStats(){
+    public ResponseEntity<DashboardResponseDTO> getStats(){
         return ResponseEntity.ok(dashboardService.getStatistics());
     }
 }

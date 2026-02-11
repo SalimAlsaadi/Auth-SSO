@@ -1,5 +1,6 @@
 package com.auth.security.auth_security_app.admin.entity;
 
+import com.auth.security.auth_security_app.admin.superClassBaseEntity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,16 +14,17 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PermissionEntity {
+public class PermissionEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer perm_id;  // INT → Integer
+    @Column(name = "perm_id")
+    private Integer perm_id;
 
-    @Column(nullable = false, unique = true, length = 100)
+    @Column(name = "permissionName", nullable = false, unique = true, length = 100)
     private String permissionName;
 
-    @Column(length = 200)
+    @Column(name = "description", length = 200)
     private String description;
 
     @OneToMany(mappedBy = "permission", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -1,18 +1,18 @@
 package com.auth.security.auth_security_app.admin.service.Interface;
 
-import com.auth.security.auth_security_app.admin.dto.clientDTO.ClientRequest;
-import com.auth.security.auth_security_app.admin.dto.clientDTO.ClientResponse;
+import com.auth.security.auth_security_app.admin.dto.clientDTO.ClientRequestDTO;
+import com.auth.security.auth_security_app.admin.dto.clientDTO.ClientResponseDTO;
 
 import java.util.List;
 
 public interface ClientService {
 
-    ClientResponse create(ClientRequest req);
+    ClientResponseDTO create(ClientRequestDTO req);
 
-    List<ClientResponse> getAll();
+    List<ClientResponseDTO> getAll();
 
-    ClientResponse getById(String clientId);
+    ClientResponseDTO getById(Integer id);
 
-    ClientResponse update(String clientId, ClientRequest req);
+    ClientResponseDTO update(String clientId, ClientRequestDTO req);
 
 }

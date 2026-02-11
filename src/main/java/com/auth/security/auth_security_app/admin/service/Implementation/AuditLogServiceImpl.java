@@ -1,6 +1,6 @@
 package com.auth.security.auth_security_app.admin.service.Implementation;
 
-import com.auth.security.auth_security_app.admin.dto.auditDTO.AuditLogResponse;
+import com.auth.security.auth_security_app.admin.dto.auditDTO.AuditLogResponseDTO;
 import com.auth.security.auth_security_app.admin.entity.AuditLogEntity;
 import com.auth.security.auth_security_app.admin.repository.AuditLogRepository;
 import com.auth.security.auth_security_app.admin.service.Interface.AuditLogService;
@@ -11,7 +11,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -35,7 +34,7 @@ public class AuditLogServiceImpl implements AuditLogService {
     }
 
     @Override
-    public Page<AuditLogResponse> getAuditLogs(Long actorUserId, String action, Pageable pageable) {
+    public Page<AuditLogResponseDTO> getAuditLogs(Long actorUserId, String action, Pageable pageable) {
 
         Page<AuditLogEntity> page;
 
@@ -56,7 +55,7 @@ public class AuditLogServiceImpl implements AuditLogService {
     }
 
     @Override
-    public AuditLogResponse getById(Long id) {
+    public AuditLogResponseDTO getById(Long id) {
         return repo.findById(id)
                 .map(this::toDTO)
                 .orElseThrow(() -> new RuntimeException("Audit log not found"));
@@ -65,9 +64,9 @@ public class AuditLogServiceImpl implements AuditLogService {
 
 
 
-    private AuditLogResponse toDTO(AuditLogEntity entity) {
+    private AuditLogResponseDTO toDTO(AuditLogEntity entity) {
 
-        AuditLogResponse dto = new AuditLogResponse();
+        AuditLogResponseDTO dto = new AuditLogResponseDTO();
 
         dto.setId(entity.getId());
         dto.setActorUserId(entity.getActorUserId());

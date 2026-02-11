@@ -1,7 +1,6 @@
 package com.auth.security.auth_security_app.admin.controller;
 
-import com.auth.security.auth_security_app.admin.dto.userDTO.UserRequest;
-import com.auth.security.auth_security_app.admin.dto.userDTO.UserResponse;
+import com.auth.security.auth_security_app.admin.dto.userDTO.*;
 import com.auth.security.auth_security_app.admin.service.Interface.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,47 +16,47 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    public ResponseEntity<UserResponse> create(@RequestBody UserRequest request) {
-        return ResponseEntity.ok(userService.create(request));
+    public ResponseEntity<UserResponseDTO> create(@RequestBody UserPublicRegistrationDTO request) {
+        return ResponseEntity.ok(userService.registerExternalUser(request));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<UserResponse> update(@PathVariable Long id, @RequestBody UserRequest request) {
-        return ResponseEntity.ok(userService.update(id, request));
+    @PutMapping("/updateUserDetails")
+    public ResponseEntity<UserResponseDTO> update(@RequestBody UserRequestDTO request) {
+        return ResponseEntity.ok(userService.update(request.getUserId(), request));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> get(@PathVariable Long id) {
-        return ResponseEntity.ok(userService.getById(id));
+    @PostMapping("/getUserById")
+    public ResponseEntity<UserResponseDTO> getUserById(@RequestBody UserIdDTO userIdDTO) {
+        return ResponseEntity.ok(userService.getById(userIdDTO.getUserId()));
     }
 
-    @GetMapping
-    public ResponseEntity<List<UserResponse>> list() {
+    @PostMapping("/getAllUsers")
+    public ResponseEntity<List<UserResponseDTO>> getAll(){
         return ResponseEntity.ok(userService.getAll());
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> delete(@PathVariable Long id) {
-        return ResponseEntity.ok(userService.delete(id));
+    @PutMapping("/deleteUser")
+    public ResponseEntity<String> delete(@RequestBody UserIdDTO userIdDTO) {
+        return ResponseEntity.ok(userService.delete(userIdDTO.getUserId()));
     }
 
-    @PutMapping("/{id}/status")
-    public ResponseEntity<String> toggleStatus(@PathVariable Long id, @RequestParam boolean enabled) {
-        return ResponseEntity.ok(userService.toggleStatus(id, enabled));
+    @PutMapping("/status")
+    public ResponseEntity<String> toggleStatus(@RequestBody ToggleStatusDTO toggleStatusDTO) {
+        return ResponseEntity.ok(userService.toggleStatus(toggleStatusDTO.getUserID(), toggleStatusDTO.getEnable()));
     }
 
-    @PutMapping("/{id}/reset-password")
-    public ResponseEntity<String> resetPassword(@PathVariable Long id, @RequestParam String newPassword) {
-        return ResponseEntity.ok(userService.resetPassword(id, newPassword));
+    @PutMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody ChangPswDTO changPswDTO) {
+        return ResponseEntity.ok(userService.resetPassword(changPswDTO.getUserId(), changPswDTO.getPassword()));
     }
 
-    @PutMapping("/{id}/roles")
-    public ResponseEntity<String> assignRoles(@PathVariable Long id, @RequestBody List<Integer> roleIds) {
-        return ResponseEntity.ok(userService.assignRoles(id, roleIds));
+    @PostMapping("/{id}/roles")
+    public ResponseEntity<String> assignRoles(@RequestBody AssignRoleDTO assignRoleDTO) {
+        return ResponseEntity.ok(userService.assignRoles(assignRoleDTO.getUserId(), assignRoleDTO.getRoleIds()));
     }
 
-    @PutMapping("/{id}/clients")
-    public ResponseEntity<String> assignClients(@PathVariable Long id, @RequestBody List<String> clientIds) {
-        return ResponseEntity.ok(userService.assignAllowedClients(id, clientIds));
+    @PostMapping("/assignClients")
+    public ResponseEntity<String> assignClients(@RequestBody AssignClientDTO assignClientDTO) {
+        return ResponseEntity.ok(userService.assignClientsForUser(assignClientDTO.getUserId(), assignClientDTO.getClientIds()));
     }
 }

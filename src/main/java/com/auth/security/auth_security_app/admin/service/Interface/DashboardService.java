@@ -1,7 +1,7 @@
 package com.auth.security.auth_security_app.admin.service.Interface;
 
-import com.auth.security.auth_security_app.admin.dto.dashboardDTO.DashboardResponse;
+import com.auth.security.auth_security_app.admin.dto.dashboardDTO.DashboardResponseDTO;
 
 public interface DashboardService {
-    DashboardResponse getStatistics();
+    DashboardResponseDTO getStatistics();
 }

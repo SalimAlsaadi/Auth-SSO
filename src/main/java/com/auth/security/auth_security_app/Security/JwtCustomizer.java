@@ -28,8 +28,7 @@ public class JwtCustomizer implements OAuth2TokenCustomizer<JwtEncodingContext> 
             return;
         }
 
-        Authentication principal = context.getPrincipal();
-        String username = principal.getName();
+        String username = context.getPrincipal().getName();
 
         UserEntity user = users.findByUsername(username).orElse(null);
         if (user == null) return;
@@ -37,11 +36,16 @@ public class JwtCustomizer implements OAuth2TokenCustomizer<JwtEncodingContext> 
         var claims = context.getClaims();
 
         claims.claim("refType", user.getRefType());
-        claims.claim("refId",  String.valueOf(user.getRefId()));
+        claims.claim("refId", user.getRefId());
         claims.claim("user", username);
 
-        List<String> roleNames = new ArrayList<>();
-        user.getRoles().forEach(r -> roleNames.add(r.getRole().getRoleName()));
-        claims.claim("roles", roleNames);
+        List<String> roles = context.getPrincipal()
+                .getAuthorities()
+                .stream()
+                .map(a -> a.getAuthority())
+                .toList();
+
+        claims.claim("roles", roles);
     }
 }
+

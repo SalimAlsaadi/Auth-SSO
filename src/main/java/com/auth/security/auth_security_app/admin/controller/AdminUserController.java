@@ -1,7 +1,7 @@
 package com.auth.security.auth_security_app.admin.controller;
 
-import com.auth.security.auth_security_app.admin.dto.userDTO.UserRequest;
-import com.auth.security.auth_security_app.admin.dto.userDTO.UserResponse;
+import com.auth.security.auth_security_app.admin.dto.userDTO.UserRequestDTO;
+import com.auth.security.auth_security_app.admin.dto.userDTO.UserResponseDTO;
 import com.auth.security.auth_security_app.admin.service.Interface.UserService;
 
 import lombok.RequiredArgsConstructor;
@@ -21,28 +21,28 @@ public class AdminUserController {
     // Create User
     @PostMapping
     @PreAuthorize("hasRole('SAS_ADMIN')")
-    public ResponseEntity<UserResponse> create(@RequestBody UserRequest request) {
+    public ResponseEntity<UserResponseDTO> create(@RequestBody UserRequestDTO request) {
         return ResponseEntity.ok(userService.create(request));
     }
 
     // Update User
     @PutMapping("/{userId}")
     @PreAuthorize("hasRole('SAS_ADMIN')")
-    public ResponseEntity<UserResponse> update(@PathVariable Long userId, @RequestBody UserRequest request) {
+    public ResponseEntity<UserResponseDTO> update(@PathVariable Long userId, @RequestBody UserRequestDTO request) {
         return ResponseEntity.ok(userService.update(userId, request));
     }
 
     // Get All
     @GetMapping
     @PreAuthorize("hasRole('SAS_ADMIN')")
-    public ResponseEntity<List<UserResponse>> getAll() {
+    public ResponseEntity<List<UserResponseDTO>> getAll() {
         return ResponseEntity.ok(userService.getAll());
     }
 
     // Get Single
     @GetMapping("/{userId}")
     @PreAuthorize("hasRole('SAS_ADMIN')")
-    public ResponseEntity<UserResponse> getById(@PathVariable Long userId) {
+    public ResponseEntity<UserResponseDTO> getById(@PathVariable Long userId) {
         return ResponseEntity.ok(userService.getById(userId));
     }
 

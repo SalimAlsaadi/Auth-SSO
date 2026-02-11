@@ -1,19 +1,19 @@
 package com.auth.security.auth_security_app.admin.service.Interface;
 
-import com.auth.security.auth_security_app.admin.dto.permissionDTO.PermissionRequest;
-import com.auth.security.auth_security_app.admin.dto.permissionDTO.PermissionResponse;
+import com.auth.security.auth_security_app.admin.dto.permissionDTO.PermissionRequestDTO;
+import com.auth.security.auth_security_app.admin.dto.permissionDTO.PermissionResponseDTO;
 
 import java.util.List;
 
 public interface PermissionService {
 
-    PermissionResponse create(PermissionRequest request);
+    PermissionResponseDTO create(PermissionRequestDTO request);
 
-    PermissionResponse update(Long permissionId, PermissionRequest request);
+    PermissionResponseDTO update(Long permissionId, PermissionRequestDTO request);
 
     String delete(Long permissionId);
 
-    List<PermissionResponse> getAll();
+    List<PermissionResponseDTO> getAll();
 
-    PermissionResponse getById(Long permissionId);
+    PermissionResponseDTO getById(Long permissionId);
 }

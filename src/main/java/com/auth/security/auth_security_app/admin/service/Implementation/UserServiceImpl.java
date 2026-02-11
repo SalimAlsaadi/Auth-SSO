@@ -1,8 +1,8 @@
 package com.auth.security.auth_security_app.admin.service.Implementation;
 
 import com.auth.security.auth_security_app.admin.dto.userDTO.UserPublicRegistrationDTO;
-import com.auth.security.auth_security_app.admin.dto.userDTO.UserRequest;
-import com.auth.security.auth_security_app.admin.dto.userDTO.UserResponse;
+import com.auth.security.auth_security_app.admin.dto.userDTO.UserRequestDTO;
+import com.auth.security.auth_security_app.admin.dto.userDTO.UserResponseDTO;
 
 import com.auth.security.auth_security_app.admin.entity.*;
 import com.auth.security.auth_security_app.admin.repository.*;
@@ -10,6 +10,8 @@ import com.auth.security.auth_security_app.admin.repository.*;
 import com.auth.security.auth_security_app.admin.service.Interface.AuditLogService;
 import com.auth.security.auth_security_app.admin.service.Interface.UserService;
 
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -34,10 +36,11 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final UserRoleRepository userRoleRepository;
-    private final UserAllowedClientRepository allowedClientRepository;
+    private final UserClientRepository userClientRepository;
     private final PasswordEncoder encoder;
     private final WebClient webClient;
     private final AuditLogService auditLogService;
+    private final ClientRepository clientRepository;
     /* =============================================================
      *  1) USER AUTHENTICATION (Login)
      * ============================================================= */
@@ -67,10 +70,11 @@ public class UserServiceImpl implements UserService, UserDetailsService {
      *  2) USER REGISTRATION (Called from Client Apps)
      * ============================================================= */
     @Override
-    public UserResponse registerExternalUser(UserPublicRegistrationDTO dto) {
+    @Transactional
+    public UserResponseDTO registerExternalUser(UserPublicRegistrationDTO dto) {
 
         if (userRepository.existsByUsername(dto.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            throw new RuntimeException("UserName already exists");
         }
 
         Long externalRefId = null;
@@ -100,7 +104,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         assignRoles(saved.getId(), getRoleIdsFromStrings(dto.getRoles()));
 
         // D) Assign Allowed Clients
-        assignAllowedClients(saved.getId(), dto.getAllowedClientIds().stream().toList());
+        assignClientsForUser(saved.getId(), dto.getAllowedClientIds().stream().toList());
 
 
         auditLogService.log(
@@ -136,7 +140,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
      * ============================================================= */
 
     @Override
-    public UserResponse create(UserRequest request) {
+    public UserResponseDTO create(UserRequestDTO request) {
 
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new RuntimeException("Username already exists");
@@ -152,7 +156,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         UserEntity saved = userRepository.save(user);
 
         assignRoles(saved.getId(), request.getRoleIds());
-        assignAllowedClients(saved.getId(), request.getAllowedClients());
+        assignClientsForUser(saved.getId(), request.getAllowedClients());
 
         auditLogService.log(
                 currentUserId(),
@@ -167,10 +171,10 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
 
     @Override
-    public UserResponse update(Long userId, UserRequest request) {
+    public UserResponseDTO update(Long userId, UserRequestDTO request) {
 
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         user.setUsername(request.getUsername());
         user.setEnabled(request.isEnabled());
@@ -184,7 +188,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         userRepository.save(user);
 
         assignRoles(userId, request.getRoleIds());
-        assignAllowedClients(userId, request.getAllowedClients());
+        assignClientsForUser(userId, request.getAllowedClients());
 
         auditLogService.log(
                 currentUserId(),
@@ -199,7 +203,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
 
     @Override
-    public UserResponse getById(Long id) {
+    public UserResponseDTO getById(Long id) {
         return userRepository.findById(id)
                 .map(this::toDTO)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -207,7 +211,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
 
     @Override
-    public List<UserResponse> getAll() {
+    public List<UserResponseDTO> getAll() {
         return userRepository.findAll()
                 .stream()
                 .map(this::toDTO)
@@ -224,8 +228,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
     @Override
     public String toggleStatus(Long userId, boolean enabled) {
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        UserEntity user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
 
         user.setEnabled(enabled);
         userRepository.save(user);
@@ -277,15 +280,16 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
 
     @Override
-    public String assignAllowedClients(Long userId, List<String> clients) {
+    public String assignClientsForUser(Long userId, List<String> clients) {
 
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        UserEntity user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
+        List<ClientEntity> checkClients=clientRepository.findByOauthClientIdIn(clients);
 
-        allowedClientRepository.deleteByUser(user);
 
-        for (String c : clients) {
-            allowedClientRepository.save(new UserAllowedClientEntity(null, user, c));
+
+        for (ClientEntity client : checkClients) {
+
+            userClientRepository.save(new UserClientEntity( null, user, client));
         }
 
         return "Allowed clients updated";
@@ -296,9 +300,9 @@ public class UserServiceImpl implements UserService, UserDetailsService {
      *  5) ENTITY → DTO
      * ============================================================= */
 
-    private UserResponse toDTO(UserEntity user) {
+    private UserResponseDTO toDTO(UserEntity user) {
 
-        UserResponse dto = new UserResponse();
+        UserResponseDTO dto = new UserResponseDTO();
 
         dto.setUserId(user.getId());
         dto.setUsername(user.getUsername());
@@ -313,12 +317,12 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                         .toList()
         );
 
-        dto.setAllowedClients(
-                user.getAllowedClients()
-                        .stream()
-                        .map(UserAllowedClientEntity::getClientId)
-                        .toList()
+        dto.setClients(
+                user.getClients() == null
+                        ? new HashSet<>()
+                        : new HashSet<>(user.getClients())
         );
+
 
         return dto;
     }
@@ -329,5 +333,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                 .map(UserEntity::getId)
                 .orElse(null);
     }
+
+
 
 }

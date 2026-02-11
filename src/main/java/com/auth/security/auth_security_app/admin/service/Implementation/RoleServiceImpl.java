@@ -1,7 +1,7 @@
 package com.auth.security.auth_security_app.admin.service.Implementation;
 
-import com.auth.security.auth_security_app.admin.dto.roleDTO.RoleRequest;
-import com.auth.security.auth_security_app.admin.dto.roleDTO.RoleResponse;
+import com.auth.security.auth_security_app.admin.dto.roleDTO.RoleRequestDTO;
+import com.auth.security.auth_security_app.admin.dto.roleDTO.RoleResponseDTO;
 import com.auth.security.auth_security_app.admin.entity.PermissionEntity;
 import com.auth.security.auth_security_app.admin.entity.RoleEntity;
 import com.auth.security.auth_security_app.admin.entity.RolePermissionEntity;
@@ -29,7 +29,7 @@ public class RoleServiceImpl implements RoleService {
 
 
     @Override
-    public RoleResponse create(RoleRequest request) {
+    public RoleResponseDTO create(RoleRequestDTO request) {
 
         if (roleRepository.existsByRoleName(request.getRoleName())) {
             throw new RuntimeException("Role name already exists");
@@ -39,7 +39,7 @@ public class RoleServiceImpl implements RoleService {
         role.setRoleName(request.getRoleName());
         role.setDescription(request.getDescription());
 
-        RoleResponse roleResponse=toDTO(roleRepository.save(role));
+        RoleResponseDTO roleResponse=toDTO(roleRepository.save(role));
         auditLogService.log(
                 currentUserId(),
                 "ROLE_ASSIGN",
@@ -53,7 +53,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public RoleResponse update(Integer roleId, RoleRequest request) {
+    public RoleResponseDTO update(Integer roleId, RoleRequestDTO request) {
 
         RoleEntity role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new RuntimeException("Role not found"));
@@ -71,7 +71,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public List<RoleResponse> getAll() {
+    public List<RoleResponseDTO> getAll() {
         return roleRepository.findAll()
                 .stream()
                 .map(this::toDTO)
@@ -79,14 +79,14 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public RoleResponse getById(Integer roleId) {
+    public RoleResponseDTO getById(Integer roleId) {
         return roleRepository.findById(roleId)
                 .map(this::toDTO)
                 .orElseThrow(() -> new RuntimeException("Role not found"));
     }
 
     @Override
-    public RoleResponse addPermission(Integer roleId, Long permissionId) {
+    public RoleResponseDTO addPermission(Integer roleId, Long permissionId) {
 
         RoleEntity role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new RuntimeException("Role not found"));
@@ -120,7 +120,7 @@ public class RoleServiceImpl implements RoleService {
 
 
     @Override
-    public RoleResponse removePermission(Integer roleId, Long permissionId) {
+    public RoleResponseDTO removePermission(Integer roleId, Long permissionId) {
 
         RoleEntity role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new RuntimeException("Role not found"));
@@ -145,8 +145,8 @@ public class RoleServiceImpl implements RoleService {
 
 
 
-    private RoleResponse toDTO(RoleEntity role) {
-        RoleResponse dto = new RoleResponse();
+    private RoleResponseDTO toDTO(RoleEntity role) {
+        RoleResponseDTO dto = new RoleResponseDTO();
 
         dto.setId(role.getRoleId());
         dto.setRoleName(role.getRoleName());

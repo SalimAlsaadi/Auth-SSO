@@ -4,8 +4,12 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class ClientRequest {
+public class ClientRequestDTO {
+
     private String clientId;
+    private String clientCode;
+    private String clientName;
+    private String clientDescription;
     private List<String> redirectUris;
     private List<String> postLogoutRedirectUris;
     private List<String> scopes;

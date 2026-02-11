@@ -1,5 +1,6 @@
 package com.auth.security.auth_security_app.admin.entity;
 
+import com.auth.security.auth_security_app.admin.superClassBaseEntity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -10,7 +11,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RolePermissionEntity {
+public class RolePermissionEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

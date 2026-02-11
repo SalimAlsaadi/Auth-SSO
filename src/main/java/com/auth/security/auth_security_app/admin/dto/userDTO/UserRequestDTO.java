@@ -5,8 +5,9 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class UserRequest {
+public class UserRequestDTO {
 
+    private Long userId;
     private String username;
     private String password;
     private String refType;

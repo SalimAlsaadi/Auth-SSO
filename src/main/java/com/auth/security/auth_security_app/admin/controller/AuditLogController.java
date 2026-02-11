@@ -1,6 +1,6 @@
 package com.auth.security.auth_security_app.admin.controller;
 
-import com.auth.security.auth_security_app.admin.dto.auditDTO.AuditLogResponse;
+import com.auth.security.auth_security_app.admin.dto.auditDTO.AuditLogResponseDTO;
 import com.auth.security.auth_security_app.admin.service.Interface.AuditLogService;
 import lombok.RequiredArgsConstructor;
 
@@ -28,7 +28,7 @@ public class AuditLogController {
      *  - action filter (optional)
      */
     @GetMapping
-    public ResponseEntity<Page<AuditLogResponse>> getAuditLogs(
+    public ResponseEntity<Page<AuditLogResponseDTO>> getAuditLogs(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "timestamp,desc") String sort,
@@ -45,7 +45,7 @@ public class AuditLogController {
 
         PageRequest pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
 
-        Page<AuditLogResponse> logs = auditLogService.getAuditLogs(actorUserId, action, pageable);
+        Page<AuditLogResponseDTO> logs = auditLogService.getAuditLogs(actorUserId, action, pageable);
 
         return ResponseEntity.ok(logs);
     }
@@ -54,7 +54,7 @@ public class AuditLogController {
      * Get specific audit log by ID
      */
     @GetMapping("/{id}")
-    public ResponseEntity<AuditLogResponse> getById(@PathVariable Long id) {
+    public ResponseEntity<AuditLogResponseDTO> getById(@PathVariable Long id) {
         return ResponseEntity.ok(auditLogService.getById(id));
     }
 }

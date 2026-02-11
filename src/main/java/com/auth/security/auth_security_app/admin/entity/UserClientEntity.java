@@ -10,7 +10,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UserAllowedClientEntity {
+public class UserClientEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,6 +20,7 @@ public class UserAllowedClientEntity {
     @JoinColumn(name = "user_id")
     private UserEntity user;
 
-    @Column(name = "client_id", nullable = false, length = 100)
-    private String clientId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "client_id", nullable = false)
+    private ClientEntity client;
 }

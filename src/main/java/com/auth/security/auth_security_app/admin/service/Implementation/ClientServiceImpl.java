@@ -1,12 +1,14 @@
 package com.auth.security.auth_security_app.admin.service.Implementation;
 
-import com.auth.security.auth_security_app.Security.SqlServerRegisteredClientRepository;
-import com.auth.security.auth_security_app.admin.dto.clientDTO.ClientRequest;
-import com.auth.security.auth_security_app.admin.dto.clientDTO.ClientResponse;
+import com.auth.security.auth_security_app.admin.dto.clientDTO.ClientRequestDTO;
+import com.auth.security.auth_security_app.admin.dto.clientDTO.ClientResponseDTO;
+import com.auth.security.auth_security_app.admin.entity.ClientEntity;
 import com.auth.security.auth_security_app.admin.entity.UserEntity;
+import com.auth.security.auth_security_app.admin.repository.ClientRepository;
 import com.auth.security.auth_security_app.admin.repository.UserRepository;
 import com.auth.security.auth_security_app.admin.service.Interface.AuditLogService;
 import com.auth.security.auth_security_app.admin.service.Interface.ClientService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -23,117 +25,152 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ClientServiceImpl implements ClientService {
 
-    private final RegisteredClientRepository repo;
+    private final ClientRepository clientRepository;
+    private final RegisteredClientRepository registeredClientRepository;
     private final UserRepository userRepository;
     private final AuditLogService auditLogService;
-
 
     /* ============================================================
        CREATE
        ============================================================ */
     @Override
-    public ClientResponse create(ClientRequest req) {
+    public ClientResponseDTO create(ClientRequestDTO req) {
 
-        if (repo.findByClientId(req.getClientId()) != null) {
-            throw new RuntimeException("Client already exists");
+        if (clientRepository.findByClientCode(req.getClientCode()).isPresent()) {
+            throw new IllegalStateException("Client code already exists");
         }
 
-        RegisteredClient client = mapToEntity(req);
-        repo.save(client);
+        if (registeredClientRepository.findByClientId(req.getClientId()) != null) {
+            throw new IllegalStateException("OAuth clientId already exists");
+        }
+
+        RegisteredClient rc = buildRegisteredClient(req);
+
+        registeredClientRepository.save(rc);
+
+        ClientEntity entity = ClientEntity.builder()
+                .clientCode(req.getClientCode())
+                .clientName(req.getClientName())
+                .clientDescription(req.getClientDescription())
+                .oauthClientId(req.getClientId())
+                .build();
+
+        clientRepository.save(entity);
 
         auditLogService.log(
                 currentUserId(),
                 "CLIENT_CREATE",
                 "Client",
-                client.getClientId(),
-                "Created client" + client.getClientName()
+                rc.getClientId(),
+                "Created client: " + req.getClientName()
         );
 
-        return mapToResponse(client);
+        return mapToResponse(rc, entity);
     }
+
+    @Override
+    public List<ClientResponseDTO> getAll() {
+        return clientRepository.findAll().stream()
+                .map(entity -> {
+                    RegisteredClient rc = registeredClientRepository
+                            .findByClientId(entity.getOauthClientId());
+
+                    if (rc == null) {
+                        // Decide: skip, or return partial, or throw.
+                        // Best practice: skip broken rows OR log warning.
+                        return null;
+                    }
+                    return mapToResponse(rc, entity);
+                })
+                .filter(java.util.Objects::nonNull)
+                .toList();
+    }
+
 
     /* ============================================================
        GET ONE
        ============================================================ */
     @Override
-    public ClientResponse getById(String clientId) {
-        RegisteredClient client = repo.findByClientId(clientId);
-        if (client == null) {
-            throw new RuntimeException("Client not found");
+    public ClientResponseDTO getById(Integer id) {
+
+        ClientEntity entity = clientRepository.findById(id)
+                .orElseThrow(() -> new IllegalStateException("Client not found"));
+
+        RegisteredClient rc =
+                registeredClientRepository.findByClientId(entity.getOauthClientId());
+
+        if (rc == null) {
+            throw new IllegalStateException("OAuth client configuration missing");
         }
-        return mapToResponse(client);
-    }
 
-    /* ============================================================
-       GET ALL
-       ============================================================ */
-    @Override
-    public List<ClientResponse> getAll() {
-
-        // JdbcTemplate repo does not support findAll(), so we query manually
-        // You can add SELECT * FROM oauth2_registered_client easily later.
-
-        throw new UnsupportedOperationException("List all clients not yet implemented");
+        return mapToResponse(rc, entity);
     }
 
     /* ============================================================
        UPDATE
        ============================================================ */
     @Override
-    public ClientResponse update(String clientId, ClientRequest req) {
+    public ClientResponseDTO update(String oauthClientId, ClientRequestDTO req) {
 
-        RegisteredClient existing = repo.findByClientId(clientId);
+        RegisteredClient existing =
+                registeredClientRepository.findByClientId(oauthClientId);
+
         if (existing == null) {
-            throw new RuntimeException("Client not found");
+            throw new IllegalStateException("Client not found");
         }
 
-        RegisteredClient updated = mapToUpdatedEntity(existing, req);
-        repo.save(updated);
+        RegisteredClient updated = rebuildRegisteredClient(existing, req);
+
+        registeredClientRepository.save(updated);
+
+        ClientEntity entity =
+                clientRepository.findByOauthClientId(oauthClientId)
+                        .orElseThrow(() -> new IllegalStateException("Client entity missing"));
+
+        entity.setClientName(req.getClientName());
+        entity.setClientDescription(req.getClientDescription());
+
+        clientRepository.save(entity);
 
         auditLogService.log(
                 currentUserId(),
                 "CLIENT_UPDATE",
                 "Client",
-                clientId,
-                "Updated redirect URIs or scopes for this client: " + existing.getClientName()
+                oauthClientId,
+                "Updated client configuration"
         );
 
-        return mapToResponse(updated);
+        return mapToResponse(updated, entity);
     }
 
-
     /* ============================================================
-       PRIVATE MAPPER - DTO → ENTITY
+       BUILD REGISTERED CLIENT (CREATE)
        ============================================================ */
-    private RegisteredClient mapToEntity(ClientRequest r) {
+    private RegisteredClient buildRegisteredClient(ClientRequestDTO r) {
 
         return RegisteredClient.withId(UUID.randomUUID().toString())
                 .clientId(r.getClientId())
-                .clientName(r.getClientId())
+                .clientIdIssuedAt(java.time.Instant.now())
+                .clientName(r.getClientName())
 
-                // Authentication
+                // Public client + PKCE
                 .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
 
-                // Grant Types
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
 
-                // Redirect URIs
                 .redirectUris(uris -> uris.addAll(r.getRedirectUris()))
                 .postLogoutRedirectUris(uris -> uris.addAll(r.getPostLogoutRedirectUris()))
-
-                // Scopes
                 .scopes(sc -> sc.addAll(r.getScopes()))
 
-                // Client Settings
                 .clientSettings(ClientSettings.builder()
-                        .requireProofKey(r.isRequireProofKey())
+                        .requireProofKey(true)
                         .requireAuthorizationConsent(false)
                         .build())
 
-                // Token Settings
                 .tokenSettings(TokenSettings.builder()
                         .accessTokenTimeToLive(Duration.ofMinutes(15))
                         .refreshTokenTimeToLive(Duration.ofDays(30))
@@ -144,39 +181,20 @@ public class ClientServiceImpl implements ClientService {
     }
 
     /* ============================================================
-       PRIVATE MAPPER - ENTITY → DTO
+       BUILD REGISTERED CLIENT (UPDATE – JDBC SAFE)
        ============================================================ */
-    private ClientResponse mapToResponse(RegisteredClient c) {
-
-        ClientResponse dto = new ClientResponse();
-
-        dto.setId(c.getId());
-        dto.setClientId(c.getClientId());
-        dto.setClientName(c.getClientName());
-
-        dto.setRedirectUris(c.getRedirectUris().stream().toList());
-        dto.setPostLogoutRedirectUris(c.getPostLogoutRedirectUris().stream().toList());
-        dto.setScopes(c.getScopes().stream().toList());
-
-        dto.setRequireProofKey(c.getClientSettings().isRequireProofKey());
-        dto.setRequireAuthorizationConsent(c.getClientSettings().isRequireAuthorizationConsent());
-
-        dto.setAccessTokenTTL(c.getTokenSettings().getAccessTokenTimeToLive().toSeconds());
-        dto.setRefreshTokenTTL(c.getTokenSettings().getRefreshTokenTimeToLive().toSeconds());
-
-        return dto;
-    }
-
-    /* ============================================================
-       PRIVATE MAPPER - UPDATE ENTITY WITH REQUEST
-       ============================================================ */
-    private RegisteredClient mapToUpdatedEntity(RegisteredClient old, ClientRequest r) {
+    private RegisteredClient rebuildRegisteredClient(
+            RegisteredClient old,
+            ClientRequestDTO r
+    ) {
 
         return RegisteredClient.withId(old.getId())
-                .clientId(r.getClientId())
-                .clientName(r.getClientId())
+                .clientId(old.getClientId())
+                .clientIdIssuedAt(old.getClientIdIssuedAt())
+                .clientName(r.getClientName())
 
                 .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
+
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
 
@@ -193,12 +211,51 @@ public class ClientServiceImpl implements ClientService {
                 .build();
     }
 
+    /* ============================================================
+       RESPONSE MAPPER
+       ============================================================ */
+    private ClientResponseDTO mapToResponse(
+            RegisteredClient rc,
+            ClientEntity entity
+    ) {
 
+        ClientResponseDTO dto = new ClientResponseDTO();
+
+        dto.setId(entity.getId());
+        dto.setClientCode(entity.getClientCode());
+        dto.setClientId(rc.getClientId());
+        dto.setClientName(rc.getClientName());
+        dto.setClientDescription(entity.getClientDescription());
+
+        dto.setRedirectUris(List.copyOf(rc.getRedirectUris()));
+        dto.setPostLogoutRedirectUris(List.copyOf(rc.getPostLogoutRedirectUris()));
+        dto.setScopes(List.copyOf(rc.getScopes()));
+
+        dto.setRequireProofKey(rc.getClientSettings().isRequireProofKey());
+        dto.setRequireAuthorizationConsent(
+                rc.getClientSettings().isRequireAuthorizationConsent()
+        );
+
+        dto.setAccessTokenTTL(
+                rc.getTokenSettings().getAccessTokenTimeToLive().toSeconds()
+        );
+        dto.setRefreshTokenTTL(
+                rc.getTokenSettings().getRefreshTokenTimeToLive().toSeconds()
+        );
+
+        return dto;
+    }
+
+    /* ============================================================
+       CURRENT USER
+       ============================================================ */
     private Long currentUserId() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        String username = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
         return userRepository.findByUsername(username)
                 .map(UserEntity::getId)
                 .orElse(null);
     }
-
 }

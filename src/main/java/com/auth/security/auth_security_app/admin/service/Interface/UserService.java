@@ -1,22 +1,22 @@
 package com.auth.security.auth_security_app.admin.service.Interface;
 
 import com.auth.security.auth_security_app.admin.dto.userDTO.UserPublicRegistrationDTO;
-import com.auth.security.auth_security_app.admin.dto.userDTO.UserRequest;
-import com.auth.security.auth_security_app.admin.dto.userDTO.UserResponse;
+import com.auth.security.auth_security_app.admin.dto.userDTO.UserRequestDTO;
+import com.auth.security.auth_security_app.admin.dto.userDTO.UserResponseDTO;
 
 import java.util.List;
 
 public interface UserService {
 
-    UserResponse create(UserRequest request);
+    UserResponseDTO create(UserRequestDTO request);
 
-    UserResponse update(Long userId, UserRequest request);
+    UserResponseDTO update(Long userId, UserRequestDTO request);
 
     String delete(Long userId);
 
-    UserResponse getById(Long userId);
+    UserResponseDTO getById(Long userId);
 
-    List<UserResponse> getAll();
+    List<UserResponseDTO> getAll();
 
     String toggleStatus(Long userId, boolean enabled);
 
@@ -24,7 +24,7 @@ public interface UserService {
 
     String assignRoles(Long userId, List<Integer> roleIds);
 
-    String assignAllowedClients(Long userId, List<String> clientIds);
+    String assignClientsForUser(Long userId, List<String> clientIds);
 
-    UserResponse registerExternalUser(UserPublicRegistrationDTO dto);
+    UserResponseDTO registerExternalUser(UserPublicRegistrationDTO dto);
 }

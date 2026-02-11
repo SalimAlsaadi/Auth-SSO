@@ -5,11 +5,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken;
@@ -17,7 +15,6 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
-import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2AuthorizationCodeRequestAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
@@ -50,7 +47,14 @@ public class SecurityConfiguration {
     public SecurityFilterChain loginChain(HttpSecurity http) throws Exception {
 
         http
-                .securityMatcher("/auth/login", "/perform_login", "/css/**", "/js/**", "/static/**", "/images/**")
+                .securityMatcher(
+                        "/auth/login",
+                        "/perform_login",
+                        "/css/**",
+                        "/js/**",
+                        "/images/**",
+                        "/static/**"
+                )
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().permitAll()
                 )
@@ -59,8 +63,8 @@ public class SecurityConfiguration {
                         .loginProcessingUrl("/perform_login")
                         .successHandler(successHandler)
                 )
-                .requestCache(cache -> cache.disable())  // ❌ Do NOT save requests in this chain
-                .csrf(cs -> cs.disable());
+                .requestCache(cache -> cache.disable())
+                .csrf(csrf -> csrf.disable());
 
         return http.build();
     }
@@ -72,43 +76,53 @@ public class SecurityConfiguration {
     // --------------------------------------------------------------------
     @Bean
     @Order(1)
-    public SecurityFilterChain authServerChain(HttpSecurity http, OidcUserInfoMapper mapper) throws Exception {
+    public SecurityFilterChain authServerChain(
+            HttpSecurity http,
+            OidcUserInfoMapper mapper
+    ) throws Exception {
 
+        // Applies internal matchers + anyRequest().authenticated()
         OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
 
-        http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
+        http
+                // Limit this chain strictly to Authorization Server endpoints
+                .securityMatcher("/oauth2/**", "/.well-known/**")
+
+                .getConfigurer(OAuth2AuthorizationServerConfigurer.class)
                 .authorizationEndpoint(end -> end
-                        .authorizationRequestConverters(c -> c.add(new OAuth2AuthorizationCodeRequestAuthenticationConverter()))
+                        .authorizationRequestConverters(c ->
+                                c.add(new OAuth2AuthorizationCodeRequestAuthenticationConverter())
+                        )
                 )
-                .oidc(oidc -> oidc.userInfoEndpoint(u -> u.userInfoMapper(mapper)))
+                .oidc(oidc -> oidc
+                        .userInfoEndpoint(u -> u.userInfoMapper(mapper))
+                )
                 .tokenEndpoint(token -> token
                         .accessTokenResponseHandler((req, res, auth) -> {
+
                             OAuth2AccessTokenAuthenticationToken tokenAuth =
                                     (OAuth2AccessTokenAuthenticationToken) auth;
 
                             String jwt = tokenAuth.getAccessToken().getTokenValue();
-                            long expiresAt = tokenAuth.getAccessToken().getExpiresAt().getEpochSecond();
+                            long expiresAt = tokenAuth.getAccessToken()
+                                    .getExpiresAt()
+                                    .getEpochSecond();
 
                             cookieHandler.writeTokenCookie(res, jwt, expiresAt);
                         })
                 );
 
-        http.logout(l -> l
-                .logoutUrl("/auth/logout")
-                .logoutSuccessHandler((req, res, auth) -> {
-                    cookieHandler.clear(res);
-                    res.setStatus(HttpServletResponse.SC_OK);
-                })
-        );
+        http
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(
+                                new LoginUrlAuthenticationEntryPoint("/auth/login")
+                        )
+                )
+                .csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults());
 
-        http.exceptionHandling(ex -> ex.authenticationEntryPoint(
-                new LoginUrlAuthenticationEntryPoint("/auth/login")
-        ));
-
-        http.oauth2ResourceServer(r -> r.jwt());
-        http.csrf(cs -> cs.disable());
-        http.cors(Customizer.withDefaults());
-        http.requestCache(cache -> cache.requestCache(new HttpSessionRequestCache()));
+        // ❗ NO authorizeHttpRequests() here
+        // ❗ NO anyRequest() here
 
         return http.build();
     }
@@ -121,35 +135,50 @@ public class SecurityConfiguration {
     @Order(2)
     public SecurityFilterChain apiChain(HttpSecurity http) throws Exception {
 
-        http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/","/oauth2/**","/error").permitAll()
-                .anyRequest().authenticated()
-        );
+        http
+                // IMPORTANT: limit this chain to API + Admin only
+                .securityMatcher("/admin/**", "/api/**")
 
-        http.oauth2ResourceServer(r -> r.jwt());
-        http.csrf(cs -> cs.disable());
+                .authorizeHttpRequests(auth -> auth
+                        // Public endpoints (if any)
+                        .requestMatchers("/", "/error").permitAll()
 
-        http.cors(cors -> cors.configurationSource(req -> {
-            CorsConfiguration c = new CorsConfiguration();
-            c.setAllowCredentials(true);
-            c.setAllowedOrigins(List.of("http://localhost:4200"));
-            c.setAllowedHeaders(List.of("*"));
-            c.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
-            return c;
-        }));
+                        // Admin endpoints
+                       // .requestMatchers("/admin/**").hasRole("ADMIN")
+
+                        // Any other API request
+                        .anyRequest().permitAll()
+                )
+
+                // JWT validation (access token from Authorization Server)
+                .oauth2ResourceServer(oauth -> oauth.jwt())
+
+                // Stateless API
+                .csrf(csrf -> csrf.disable())
+
+                // CORS for Angular
+                .cors(cors -> cors.configurationSource(req -> {
+                    CorsConfiguration c = new CorsConfiguration();
+                    c.setAllowCredentials(true);
+                    c.setAllowedOrigins(List.of("http://localhost:4200"));
+                    c.setAllowedHeaders(List.of("*"));
+                    c.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                    return c;
+                }));
 
         return http.build();
     }
+
 
     @Bean
     public PasswordEncoder encoder() {
         return new BCryptPasswordEncoder(12);
     }
 
-    @Bean
-    public RegisteredClientRepository registeredClientRepository(JdbcTemplate jdbc) {
-        return new SqlServerRegisteredClientRepository(jdbc);
-    }
+//    @Bean
+//    public RegisteredClientRepository registeredClientRepository(JdbcTemplate jdbc) {
+//        return new com.auth.security.auth_security_app.security.SqlServerRegisteredClientRepository(jdbc);
+//    }
 
     @Bean
     public AuthorizationServerSettings authorizationServerSettings() {

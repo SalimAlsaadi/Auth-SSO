@@ -1,23 +1,23 @@
 package com.auth.security.auth_security_app.admin.service.Interface;
 
-import com.auth.security.auth_security_app.admin.dto.roleDTO.RoleRequest;
-import com.auth.security.auth_security_app.admin.dto.roleDTO.RoleResponse;
+import com.auth.security.auth_security_app.admin.dto.roleDTO.RoleRequestDTO;
+import com.auth.security.auth_security_app.admin.dto.roleDTO.RoleResponseDTO;
 
 import java.util.List;
 
 public interface RoleService {
 
-    RoleResponse create(RoleRequest request);
+    RoleResponseDTO create(RoleRequestDTO request);
 
-    RoleResponse update(Integer roleId, RoleRequest request);
+    RoleResponseDTO update(Integer roleId, RoleRequestDTO request);
 
     String delete(Integer roleId);
 
-    List<RoleResponse> getAll();
+    List<RoleResponseDTO> getAll();
 
-    RoleResponse getById(Integer roleId);
+    RoleResponseDTO getById(Integer roleId);
 
-    RoleResponse addPermission(Integer roleId, Long permissionId);
+    RoleResponseDTO addPermission(Integer roleId, Long permissionId);
 
-    RoleResponse removePermission(Integer roleId, Long permissionId);
+    RoleResponseDTO removePermission(Integer roleId, Long permissionId);
 }

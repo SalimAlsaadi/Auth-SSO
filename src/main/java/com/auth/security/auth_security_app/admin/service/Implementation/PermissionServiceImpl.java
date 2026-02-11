@@ -1,7 +1,7 @@
 package com.auth.security.auth_security_app.admin.service.Implementation;
 
-import com.auth.security.auth_security_app.admin.dto.permissionDTO.PermissionRequest;
-import com.auth.security.auth_security_app.admin.dto.permissionDTO.PermissionResponse;
+import com.auth.security.auth_security_app.admin.dto.permissionDTO.PermissionRequestDTO;
+import com.auth.security.auth_security_app.admin.dto.permissionDTO.PermissionResponseDTO;
 import com.auth.security.auth_security_app.admin.entity.PermissionEntity;
 import com.auth.security.auth_security_app.admin.repository.PermissionRepository;
 import com.auth.security.auth_security_app.admin.service.Interface.PermissionService;
@@ -21,7 +21,7 @@ public class PermissionServiceImpl implements PermissionService {
        CREATE
        ============================================================ */
     @Override
-    public PermissionResponse create(PermissionRequest request) {
+    public PermissionResponseDTO create(PermissionRequestDTO request) {
 
         if (permissionRepository.existsByPermissionName(request.getPermissionName())) {
             throw new RuntimeException("Permission name already exists");
@@ -39,7 +39,7 @@ public class PermissionServiceImpl implements PermissionService {
        UPDATE
        ============================================================ */
     @Override
-    public PermissionResponse update(Long permissionId, PermissionRequest request) {
+    public PermissionResponseDTO update(Long permissionId, PermissionRequestDTO request) {
 
         PermissionEntity p = permissionRepository.findById(permissionId)
                 .orElseThrow(() -> new RuntimeException("Permission not found"));
@@ -63,7 +63,7 @@ public class PermissionServiceImpl implements PermissionService {
        GET ALL
        ============================================================ */
     @Override
-    public List<PermissionResponse> getAll() {
+    public List<PermissionResponseDTO> getAll() {
         return permissionRepository.findAll()
                 .stream()
                 .map(this::toDTO)
@@ -74,7 +74,7 @@ public class PermissionServiceImpl implements PermissionService {
        GET BY ID
        ============================================================ */
     @Override
-    public PermissionResponse getById(Long permissionId) {
+    public PermissionResponseDTO getById(Long permissionId) {
         PermissionEntity p = permissionRepository.findById(permissionId)
                 .orElseThrow(() -> new RuntimeException("Permission not found"));
         return toDTO(p);
@@ -83,9 +83,9 @@ public class PermissionServiceImpl implements PermissionService {
     /* ============================================================
        ENTITY → DTO MAPPER
        ============================================================ */
-    private PermissionResponse toDTO(PermissionEntity p) {
+    private PermissionResponseDTO toDTO(PermissionEntity p) {
 
-        PermissionResponse dto = new PermissionResponse();
+        PermissionResponseDTO dto = new PermissionResponseDTO();
         dto.setId(p.getPerm_id());
         dto.setPermissionName(p.getPermissionName());
         dto.setDescription(p.getDescription());

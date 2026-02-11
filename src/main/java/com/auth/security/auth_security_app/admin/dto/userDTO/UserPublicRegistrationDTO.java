@@ -39,7 +39,7 @@ public class UserPublicRegistrationDTO {
     @Size(min = 8)
     private String password;
 
-    private Set<String> allowedClientIds = new HashSet<>();
+    private Set<String> allowedClientIds;
 
     @NotBlank
     private String refType;
