@@ -28,16 +28,20 @@ public class UserEntity {
     @Column(name = "ref_id")
     private Long refId;
 
-    @Column(name = "ref_type", length = 20)
-    private String refType;
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "ref_type_id", foreignKey = @ForeignKey(name = "FK_users_ref_type"))
+//    private ClientRefTypeEntity refType;
+
 
     @Column(name = "is_enable")
     private boolean enabled;
 
 
+    @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<UserRoleEntity> roles = new HashSet<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserClientEntity> clients = new HashSet<>();
 

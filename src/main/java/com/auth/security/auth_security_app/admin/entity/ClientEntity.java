@@ -3,6 +3,7 @@ import com.auth.security.auth_security_app.admin.superClassBaseEntity.BaseEntity
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -50,6 +51,9 @@ public class ClientEntity extends BaseEntity {
 
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserClientEntity> userClientEntity;
+
+//    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
+//    private Set<ClientRefTypeEntity> refTypes = new HashSet<>();
 
 }
 

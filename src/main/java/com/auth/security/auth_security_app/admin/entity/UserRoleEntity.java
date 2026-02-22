@@ -18,11 +18,11 @@ public class UserRoleEntity {
 
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", foreignKey = @ForeignKey(name = "FK_user_roles_user"))
     private UserEntity user;
 
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "role_id")
+    @JoinColumn(name = "role_id", foreignKey = @ForeignKey(name = "FK_user_roles_role"))
     private RoleEntity role;
 }

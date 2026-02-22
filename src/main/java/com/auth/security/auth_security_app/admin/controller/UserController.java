@@ -20,6 +20,12 @@ public class UserController {
         return ResponseEntity.ok(userService.registerExternalUser(request));
     }
 
+    @PostMapping("/service")
+    public ResponseEntity<Long> registerFromExternalSystems(@RequestBody ServiceRegistrationDTO request) {
+
+        return ResponseEntity.ok(userService.registerFromService(request).getUserId());
+    }
+
     @PutMapping("/updateUserDetails")
     public ResponseEntity<UserResponseDTO> update(@RequestBody UserRequestDTO request) {
         return ResponseEntity.ok(userService.update(request.getUserId(), request));

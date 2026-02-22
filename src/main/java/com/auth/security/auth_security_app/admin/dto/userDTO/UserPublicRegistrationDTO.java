@@ -42,7 +42,7 @@ public class UserPublicRegistrationDTO {
     private Set<String> allowedClientIds;
 
     @NotBlank
-    private String refType;
+    private Integer refType;
 
     @NotBlank
     private Set<String> roles;

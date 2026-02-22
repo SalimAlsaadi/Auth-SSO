@@ -10,7 +10,7 @@ public class UserRequestDTO {
     private Long userId;
     private String username;
     private String password;
-    private String refType;
+    private Integer refType;
     private Long refId;
 
     private boolean enabled;

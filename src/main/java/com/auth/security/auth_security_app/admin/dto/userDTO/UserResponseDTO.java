@@ -15,7 +15,7 @@ public class UserResponseDTO {
     private String username;
     private boolean enabled;
 
-    private String refType;
+    //private Integer refType;
     private Long refId;
 
     private List<String> roles;

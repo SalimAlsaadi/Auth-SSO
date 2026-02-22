@@ -38,7 +38,7 @@ public class OidcUserInfoMapper implements java.util.function.Function<OidcUserI
                 claims.put(StandardClaimNames.PREFERRED_USERNAME, u.getUsername());
             }
 
-            claims.put("refType", u.getRefType());
+            //claims.put("refType", u.getRefType());
             claims.put("refId", u.getRefId());
 
             List<String> roles = new ArrayList<>();

@@ -143,6 +143,8 @@ public class SecurityConfiguration {
                         // Public endpoints (if any)
                         .requestMatchers("/", "/error").permitAll()
 
+                        .requestMatchers("/admin/users/service").permitAll()//temporary, after prepare Ui then i will delete it
+
                         // Admin endpoints
                        // .requestMatchers("/admin/**").hasRole("ADMIN")
 

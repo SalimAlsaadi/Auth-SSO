@@ -35,7 +35,7 @@ public class JwtCustomizer implements OAuth2TokenCustomizer<JwtEncodingContext> 
 
         var claims = context.getClaims();
 
-        claims.claim("refType", user.getRefType());
+        //claims.claim("refType", user.getRefType());
         claims.claim("refId", user.getRefId());
         claims.claim("user", username);
 

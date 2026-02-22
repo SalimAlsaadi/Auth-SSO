@@ -1,5 +1,6 @@
 package com.auth.security.auth_security_app.admin.service.Implementation;
 
+import com.auth.security.auth_security_app.admin.dto.userDTO.ServiceRegistrationDTO;
 import com.auth.security.auth_security_app.admin.dto.userDTO.UserPublicRegistrationDTO;
 import com.auth.security.auth_security_app.admin.dto.userDTO.UserRequestDTO;
 import com.auth.security.auth_security_app.admin.dto.userDTO.UserResponseDTO;
@@ -94,7 +95,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         UserEntity user = new UserEntity();
         user.setUsername(dto.getEmail());
         user.setPassword(encoder.encode(dto.getPassword()));
-        user.setRefType(dto.getRefType());
+        //user.setRefType( refTypeRepository.findById(dto.getRefType()).orElseThrow(() -> new RuntimeException("RefType not found")));
         user.setRefId(externalRefId);
         user.setEnabled(dto.getIsActive());
 
@@ -116,8 +117,32 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         );
 
         return getById(saved.getId());
+    }
+
+    @Transactional
+    public UserResponseDTO registerFromService(ServiceRegistrationDTO request) {
+
+        if (userRepository.existsByUsername(request.getEmail())) {
+            throw new RuntimeException("User already exists");
+        }
+
+        UserEntity user = UserEntity.builder()
+                .username(request.getEmail())
+                .password(encoder.encode(request.getPassword()))
+                .refId(request.getRefId())
+                .enabled(true)
+                .build();
 
 
+        UserEntity saved = userRepository.save(user);
+
+        // C) Assign Roles
+        assignRoles(saved.getId(), getRoleIdsFromStrings(request.getRoles()));
+
+        // D) Assign Allowed Clients
+        assignClientsForUser(saved.getId(), request.getAllowedClientIds().stream().toList());
+
+        return toDTO(saved);
     }
 
     // Map role names → DB IDs
@@ -151,7 +176,6 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         user.setPassword(encoder.encode(request.getPassword()));
         user.setEnabled(request.isEnabled());
         user.setRefId(request.getRefId());
-        user.setRefType(request.getRefType());
 
         UserEntity saved = userRepository.save(user);
 
@@ -179,7 +203,6 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         user.setUsername(request.getUsername());
         user.setEnabled(request.isEnabled());
         user.setRefId(request.getRefId());
-        user.setRefType(request.getRefType());
 
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
             user.setPassword(encoder.encode(request.getPassword()));
@@ -258,13 +281,14 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        userRoleRepository.deleteByUser(user);
 
         for (Integer roleId : roleIds) {
             RoleEntity role = roleRepository.findById(roleId)
                     .orElseThrow(() -> new RuntimeException("Role not found"));
 
-            userRoleRepository.save(new UserRoleEntity(null, user, role));
+            UserRoleEntity userRole = new UserRoleEntity(null, user, role);
+            user.getRoles().add(userRole);
+            userRoleRepository.save(userRole);
 
             auditLogService.log(
                     currentUserId(),
@@ -289,7 +313,11 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
         for (ClientEntity client : checkClients) {
 
-            userClientRepository.save(new UserClientEntity( null, user, client));
+            UserClientEntity uc = new UserClientEntity(null, user, client);
+
+            user.getClients().add(uc);
+
+            userClientRepository.save(uc);
         }
 
         return "Allowed clients updated";
@@ -308,7 +336,6 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         dto.setUsername(user.getUsername());
         dto.setEnabled(user.isEnabled());
         dto.setRefId(user.getRefId());
-        dto.setRefType(user.getRefType());
 
         dto.setRoles(
                 user.getRoles()

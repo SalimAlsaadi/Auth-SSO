@@ -1,5 +1,6 @@
 package com.auth.security.auth_security_app.admin.service.Interface;
 
+import com.auth.security.auth_security_app.admin.dto.userDTO.ServiceRegistrationDTO;
 import com.auth.security.auth_security_app.admin.dto.userDTO.UserPublicRegistrationDTO;
 import com.auth.security.auth_security_app.admin.dto.userDTO.UserRequestDTO;
 import com.auth.security.auth_security_app.admin.dto.userDTO.UserResponseDTO;
@@ -27,4 +28,6 @@ public interface UserService {
     String assignClientsForUser(Long userId, List<String> clientIds);
 
     UserResponseDTO registerExternalUser(UserPublicRegistrationDTO dto);
+
+    UserResponseDTO registerFromService(ServiceRegistrationDTO request);
 }
