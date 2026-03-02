@@ -28,10 +28,6 @@ public class UserEntity {
     @Column(name = "ref_id")
     private Long refId;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "ref_type_id", foreignKey = @ForeignKey(name = "FK_users_ref_type"))
-//    private ClientRefTypeEntity refType;
-
 
     @Column(name = "is_enable")
     private boolean enabled;

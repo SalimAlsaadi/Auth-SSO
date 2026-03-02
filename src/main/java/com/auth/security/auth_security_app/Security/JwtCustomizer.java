@@ -35,10 +35,16 @@ public class JwtCustomizer implements OAuth2TokenCustomizer<JwtEncodingContext> 
 
         var claims = context.getClaims();
 
-        //claims.claim("refType", user.getRefType());
-        claims.claim("refId", user.getRefId());
-        claims.claim("user", username);
+        /* ===============================
+            Identity Claims (MASTER)
+           =============================== */
+        claims.claim("userId", user.getId());     // SAS ID
+        claims.claim("refId", user.getRefId());   // Resource ID
+        claims.claim("username", username);
 
+        /* ===============================
+            Authorization Claims
+           =============================== */
         List<String> roles = context.getPrincipal()
                 .getAuthorities()
                 .stream()
@@ -46,6 +52,15 @@ public class JwtCustomizer implements OAuth2TokenCustomizer<JwtEncodingContext> 
                 .toList();
 
         claims.claim("roles", roles);
+
+        /* ===============================
+            Multi-Client Access
+           =============================== */
+        List<String> allowedClients = user.getClients()
+                .stream()
+                .map(c -> c.getClient().getOauthClientId())
+                .toList();
+
+        claims.claim("allowedClients", allowedClients);
     }
 }
-

@@ -26,9 +26,7 @@ public class JwtCookieFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
 
-        OAuth2AccessTokenAuthenticationToken token =
-                (OAuth2AccessTokenAuthenticationToken)
-                        request.getAttribute(OAuth2AccessTokenAuthenticationToken.class.getName());
+        OAuth2AccessTokenAuthenticationToken token = (OAuth2AccessTokenAuthenticationToken) request.getAttribute(OAuth2AccessTokenAuthenticationToken.class.getName());
 
         if (token != null && token.getAccessToken() != null) {
             String jwt = token.getAccessToken().getTokenValue();

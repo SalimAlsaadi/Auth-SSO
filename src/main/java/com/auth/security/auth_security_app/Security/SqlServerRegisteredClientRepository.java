@@ -1,4 +1,4 @@
-package com.auth.security.auth_security_app.security;
+package com.auth.security.auth_security_app.Security;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;

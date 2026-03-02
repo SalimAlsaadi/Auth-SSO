@@ -31,9 +31,7 @@ public class SecurityConfiguration {
     private final JwtCookieFilter jwtCookieFilter;
     private final CookieHandler cookieHandler;
 
-    public SecurityConfiguration(CustomLoginSuccessHandler successHandler,
-                                 JwtCookieFilter jwtCookieFilter,
-                                 CookieHandler cookieHandler) {
+    public SecurityConfiguration(CustomLoginSuccessHandler successHandler, JwtCookieFilter jwtCookieFilter, CookieHandler cookieHandler) {
         this.successHandler = successHandler;
         this.jwtCookieFilter = jwtCookieFilter;
         this.cookieHandler = cookieHandler;
