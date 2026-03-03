@@ -38,7 +38,12 @@
     </div>
 
     <!-- Login Form -->
-    <form method="post" action="/perform_login">
+    <form th:action="@{/perform_login}" method="post">
+
+        <!-- CSRF TOKEN (REQUIRED) -->
+        <input type="hidden"
+               th:name="${_csrf.parameterName}"
+               th:value="${_csrf.token}" />
 
         <div class="mb-4">
             <label class="block text-gray-700 mb-1">Email</label>

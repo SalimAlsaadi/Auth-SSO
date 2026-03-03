@@ -15,6 +15,8 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Stream;
 
 @Repository
@@ -58,6 +60,21 @@ public class SqlServerRegisteredClientRepository implements RegisteredClientRepo
                 clientId
         );
     }
+
+    public List<String> findAllAllowedOrigins() {
+
+        return jdbc.query(
+                        "SELECT allowed_origins FROM oauth2_registered_client WHERE allowed_origins IS NOT NULL",
+                        (rs, rowNum) -> rs.getString("allowed_origins")
+                ).stream()
+                .flatMap(s -> Arrays.stream(s.split(",")))
+                .map(String::trim)
+                .filter(origin -> !origin.isBlank())
+                .distinct()
+                .toList();
+    }
+
+
 
     /* ============================================================
        INSERT

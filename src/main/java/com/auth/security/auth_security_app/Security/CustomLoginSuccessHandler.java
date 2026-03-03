@@ -15,11 +15,7 @@ public class CustomLoginSuccessHandler implements AuthenticationSuccessHandler {
     private final HttpSessionRequestCache requestCache = new HttpSessionRequestCache();
 
     @Override
-    public void onAuthenticationSuccess(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            org.springframework.security.core.Authentication authentication
-    ) throws IOException, ServletException {
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, org.springframework.security.core.Authentication authentication) throws IOException, ServletException {
 
         // 1️⃣ Try to restore saved OAuth2 request (VERY IMPORTANT)
         var saved = requestCache.getRequest(request, response);
