@@ -113,10 +113,9 @@ public class ClientServiceImpl implements ClientService {
        UPDATE
        ============================================================ */
     @Override
-    public ClientResponseDTO update(String oauthClientId, ClientRequestDTO req) {
+    public ClientResponseDTO update(ClientRequestDTO req) {
 
-        RegisteredClient existing =
-                registeredClientRepository.findByClientId(oauthClientId);
+        RegisteredClient existing = registeredClientRepository.findByClientId(req.getClientId());
 
         if (existing == null) {
             throw new IllegalStateException("Client not found");
@@ -126,12 +125,12 @@ public class ClientServiceImpl implements ClientService {
 
         registeredClientRepository.save(updated);
 
-        ClientEntity entity =
-                clientRepository.findByOauthClientId(oauthClientId)
-                        .orElseThrow(() -> new IllegalStateException("Client entity missing"));
+        ClientEntity entity = clientRepository.findByOauthClientId(req.getClientId()).orElseThrow(() -> new IllegalStateException("Client entity missing"));
 
         entity.setClientName(req.getClientName());
         entity.setClientDescription(req.getClientDescription());
+        entity.setClientCode(req.getClientCode());
+        entity.setOauthClientId(req.getClientId());
 
         clientRepository.save(entity);
 
@@ -139,7 +138,7 @@ public class ClientServiceImpl implements ClientService {
                 currentUserId(),
                 "CLIENT_UPDATE",
                 "Client",
-                oauthClientId,
+                req.getClientId(),
                 "Updated client configuration"
         );
 

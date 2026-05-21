@@ -25,15 +25,13 @@ public class ServiceRegistrationDTO {
     @Size(min = 8)
     private String password;
 
-    @NotBlank
-    private Integer refType;   // LANDLORD
 
     @NotNull
     private Long refId;       // returned from AQARK
 
     @NotEmpty
-    private Set<String> roles = new HashSet<>();
+    private String roles ;
 
     @NotEmpty
-    private Set<String> allowedClientIds = new HashSet<>();
+    private String allowedClientIds ;
 }

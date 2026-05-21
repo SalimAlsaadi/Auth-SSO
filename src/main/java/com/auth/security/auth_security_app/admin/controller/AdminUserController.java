@@ -4,6 +4,7 @@ import com.auth.security.auth_security_app.admin.dto.userDTO.UserRequestDTO;
 import com.auth.security.auth_security_app.admin.dto.userDTO.UserResponseDTO;
 import com.auth.security.auth_security_app.admin.service.Interface.UserService;
 
+import com.auth.security.auth_security_app.admin.superClasses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,7 +22,7 @@ public class AdminUserController {
     // Create User
     @PostMapping
     @PreAuthorize("hasRole('SAS_ADMIN')")
-    public ResponseEntity<UserResponseDTO> create(@RequestBody UserRequestDTO request) {
+    public ResponseEntity<ApiResponse<UserResponseDTO>> create(@RequestBody UserRequestDTO request) {
         return ResponseEntity.ok(userService.create(request));
     }
 

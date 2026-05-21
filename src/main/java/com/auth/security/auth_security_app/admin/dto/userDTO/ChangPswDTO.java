@@ -7,5 +7,5 @@ public class ChangPswDTO {
 
     private Long userId;
 
-    private String Password;
+    private String password;
 }

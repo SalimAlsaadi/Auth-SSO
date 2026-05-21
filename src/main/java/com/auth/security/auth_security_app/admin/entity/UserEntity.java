@@ -30,7 +30,7 @@ public class UserEntity {
 
 
     @Column(name = "is_enable")
-    private boolean enabled;
+    private Boolean enabled;
 
 
     @Builder.Default

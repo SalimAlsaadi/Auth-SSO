@@ -9,5 +9,5 @@ public class AssignRoleDTO {
 
     private Long userId;
 
-    private List<Integer> roleIds;
+    private Integer roleIds;
 }

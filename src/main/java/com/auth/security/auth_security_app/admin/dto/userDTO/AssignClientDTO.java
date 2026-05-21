@@ -11,5 +11,5 @@ public class AssignClientDTO {
 
 
     private Long userId;
-    private List<String> clientIds;
+    private String clientIds;
 }

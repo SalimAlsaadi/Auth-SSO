@@ -13,6 +13,6 @@ public interface ClientService {
 
     ClientResponseDTO getById(Integer id);
 
-    ClientResponseDTO update(String clientId, ClientRequestDTO req);
+    ClientResponseDTO update( ClientRequestDTO req);
 
 }

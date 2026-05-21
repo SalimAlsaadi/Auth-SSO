@@ -19,5 +19,5 @@ public class UserResponseDTO {
     private Long refId;
 
     private List<String> roles;
-    private Set<UserClientEntity> clients= new HashSet<>();
+    private List<String> clients;
 }

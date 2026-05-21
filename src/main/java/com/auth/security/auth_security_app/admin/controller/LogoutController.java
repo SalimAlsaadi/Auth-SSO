@@ -1,47 +1,127 @@
 package com.auth.security.auth_security_app.admin.controller;
 
 import com.auth.security.auth_security_app.Security.CookieHandler;
+import com.auth.security.auth_security_app.Security.SqlServerRegisteredClientRepository;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/auth")
 public class LogoutController {
 
-    private final CookieHandler cookieHandler;
+    private static final String DEFAULT_LOGOUT_REDIRECT = "/auth/login";
+    private static final String JSESSIONID = "JSESSIONID";
 
-    public LogoutController(CookieHandler cookieHandler) {
+    private final CookieHandler cookieHandler;
+    private final SqlServerRegisteredClientRepository registeredClientRepository;
+
+    public LogoutController(
+            CookieHandler cookieHandler,
+            SqlServerRegisteredClientRepository registeredClientRepository
+    ) {
         this.cookieHandler = cookieHandler;
+        this.registeredClientRepository = registeredClientRepository;
     }
 
     /**
-     * Browser logout (user comes from login UI)
+     * Browser / OIDC logout.
+     *
+     * Example:
+     * GET /auth/logout?client_id=AQARK-client&post_logout_redirect_uri=http://localhost:4200/
      */
     @GetMapping("/logout")
-    public void logout(HttpServletResponse response) {
+    public void logout(
+            @RequestParam(value = "client_id", required = false) String clientId,
+            @RequestParam(value = "post_logout_redirect_uri", required = false) String requestedRedirectUri,
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) throws IOException {
 
-        cookieHandler.clear(response);
+        clearServerAuthentication(request, response);
 
-        response.setHeader("Location", "/auth/login");
-        response.setStatus(302);
+        String redirectUri = resolveLogoutRedirectUri(clientId, requestedRedirectUri);
+
+        response.sendRedirect(redirectUri);
     }
 
     /**
-     * Angular logout
-     * Angular should call this with:
-     *  this.http.post('/auth/logout', {}, { withCredentials: true })
+     * API logout for SPA / Angular.
      */
     @PostMapping("/logout")
-    public ResponseEntity<?> logoutApi(HttpServletResponse response) {
+    public ResponseEntity<?> logoutApi(HttpServletRequest request, HttpServletResponse response) {
 
-        cookieHandler.clear(response);
+        clearServerAuthentication(request, response);
 
         return ResponseEntity.ok(Map.of(
-                "message", "Logged out",
-                "success", true
+                "success", true,
+                "message", "Logged out"
         ));
+    }
+
+    private void clearServerAuthentication(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
+
+        // Clear custom JWT / SAS cookie
+        cookieHandler.clear(response);
+
+        // Clear Spring Security context
+        SecurityContextHolder.clearContext();
+
+        // Invalidate server-side session
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+
+        // Expire JSESSIONID cookie
+        Cookie sessionCookie = new Cookie(JSESSIONID, null);
+        sessionCookie.setPath("/");
+        sessionCookie.setHttpOnly(true);
+        sessionCookie.setSecure(request.isSecure());
+        sessionCookie.setMaxAge(0);
+        response.addCookie(sessionCookie);
+    }
+
+    private String resolveLogoutRedirectUri(
+            String clientId,
+            String requestedRedirectUri
+    ) {
+
+        if (clientId == null || clientId.isBlank()) {
+            return DEFAULT_LOGOUT_REDIRECT;
+        }
+
+        var registeredClient = registeredClientRepository.findByClientId(clientId);
+
+        if (registeredClient == null) {
+            return DEFAULT_LOGOUT_REDIRECT;
+        }
+
+        Set<String> allowedRedirectUris = registeredClient.getPostLogoutRedirectUris();
+
+        if (allowedRedirectUris == null || allowedRedirectUris.isEmpty()) {
+            return DEFAULT_LOGOUT_REDIRECT;
+        }
+
+        if (
+                requestedRedirectUri != null &&
+                        !requestedRedirectUri.isBlank() &&
+                        allowedRedirectUris.contains(requestedRedirectUri)
+        ) {
+            return requestedRedirectUri;
+        }
+
+        return allowedRedirectUris.iterator().next();
     }
 }

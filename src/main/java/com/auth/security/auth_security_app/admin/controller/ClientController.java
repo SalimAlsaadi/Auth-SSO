@@ -14,7 +14,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/admin/clients")
 @RequiredArgsConstructor
-//@PreAuthorize("hasRole('SAS_ADMIN')")
+@PreAuthorize("hasRole('SAS_ADMIN')")
 public class ClientController {
 
     private final ClientService clientService;
@@ -35,10 +35,8 @@ public class ClientController {
     }
 
     @PutMapping("/{clientId}")
-    public ResponseEntity<ClientResponseDTO> update(
-            @PathVariable String clientId,
-            @RequestBody ClientRequestDTO request) {
-        return ResponseEntity.ok(clientService.update(clientId, request));
+    public ResponseEntity<ClientResponseDTO> update(@RequestBody ClientRequestDTO request) {
+        return ResponseEntity.ok(clientService.update(request));
     }
 
 //    @DeleteMapping("/{clientId}")

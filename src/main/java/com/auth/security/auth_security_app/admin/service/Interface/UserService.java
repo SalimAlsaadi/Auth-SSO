@@ -4,12 +4,13 @@ import com.auth.security.auth_security_app.admin.dto.userDTO.ServiceRegistration
 import com.auth.security.auth_security_app.admin.dto.userDTO.UserPublicRegistrationDTO;
 import com.auth.security.auth_security_app.admin.dto.userDTO.UserRequestDTO;
 import com.auth.security.auth_security_app.admin.dto.userDTO.UserResponseDTO;
+import com.auth.security.auth_security_app.admin.superClasses.ApiResponse;
 
 import java.util.List;
 
 public interface UserService {
 
-    UserResponseDTO create(UserRequestDTO request);
+    ApiResponse create(UserRequestDTO request);
 
     UserResponseDTO update(Long userId, UserRequestDTO request);
 
@@ -23,11 +24,13 @@ public interface UserService {
 
     String resetPassword(Long userId, String newPassword);
 
-    String assignRoles(Long userId, List<Integer> roleIds);
+    String assignRoles(Long userId, Integer roleIds);
 
-    String assignClientsForUser(Long userId, List<String> clientIds);
+    String assignClientsForUser(Long userId, String clients);
 
-    UserResponseDTO registerExternalUser(UserPublicRegistrationDTO dto);
+   // UserResponseDTO registerExternalUser(UserPublicRegistrationDTO dto);
 
-    UserResponseDTO registerFromService(ServiceRegistrationDTO request);
+    ApiResponse registerFromService(ServiceRegistrationDTO request);
+
+    ApiResponse<UserResponseDTO> updateFromService(ServiceRegistrationDTO request);
 }

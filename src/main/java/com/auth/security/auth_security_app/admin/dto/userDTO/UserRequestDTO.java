@@ -10,11 +10,9 @@ public class UserRequestDTO {
     private Long userId;
     private String username;
     private String password;
-    private Integer refType;
-    private Long refId;
 
-    private boolean enabled;
+    private Boolean enabled;
 
-    private List<Integer> roleIds;       // Assign roles
-    private List<String> allowedClients; // Assign allowed clients
+    private Integer roleIds;       // Assign roles
+    private String allowedClients; // Assign allowed clients
 }

@@ -12,6 +12,8 @@ public class ClientRequestDTO {
     private String clientDescription;
     private List<String> redirectUris;
     private List<String> postLogoutRedirectUris;
+    private List<String> allowedOrigins;
     private List<String> scopes;
     private boolean requireProofKey;
+
 }

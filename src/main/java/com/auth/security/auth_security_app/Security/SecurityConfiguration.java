@@ -1,27 +1,27 @@
 package com.auth.security.auth_security_app.Security;
 
+import com.auth.security.auth_security_app.admin.repository.UserRepository;
+import com.auth.security.auth_security_app.admin.service.Implementation.ClientAwareAuthenticationProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -33,16 +33,20 @@ public class SecurityConfiguration {
     private final SqlServerRegisteredClientRepository clientRepository;
 
     public SecurityConfiguration(CustomLoginSuccessHandler successHandler,
-                                 JwtCookieResponseHandler jwtCookieResponseHandler, SqlServerRegisteredClientRepository clientRepository) {
+                                 JwtCookieResponseHandler jwtCookieResponseHandler,
+                                 SqlServerRegisteredClientRepository clientRepository) {
         this.successHandler = successHandler;
         this.jwtCookieResponseHandler = jwtCookieResponseHandler;
         this.clientRepository = clientRepository;
     }
 
-    // 0) LOGIN UI (public)
+    // ------------------------------------------------
+    // 0) LOGIN UI
+    // ------------------------------------------------
     @Bean
     @Order(0)
-    SecurityFilterChain loginChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain loginChain(HttpSecurity http, AuthenticationProvider authenticationProvider) throws Exception {
+
         http.securityMatcher("/auth/login", "/perform_login", "/css/**", "/js/**", "/images/**")
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
                 .formLogin(form -> form
@@ -51,15 +55,18 @@ public class SecurityConfiguration {
                         .successHandler(successHandler)
                 )
                 .headers(h -> h
-                        .xssProtection(x -> x.disable()) // modern browsers rely on CSP
-                        .contentTypeOptions(c -> {})
                         .frameOptions(f -> f.sameOrigin())
-                );
+                        .contentTypeOptions(Customizer.withDefaults())
+                )
+                .cors(Customizer.withDefaults());
+        http.authenticationProvider(authenticationProvider);
 
         return http.build();
     }
 
-    // 1) AUTHORIZATION SERVER (OIDC/OAuth2)
+    // ------------------------------------------------
+    // 1) AUTHORIZATION SERVER
+    // ------------------------------------------------
     @Bean
     @Order(1)
     SecurityFilterChain authServerChain(HttpSecurity http,
@@ -72,76 +79,109 @@ public class SecurityConfiguration {
 
         configurer
                 .oidc(oidc -> oidc.userInfoEndpoint(u -> u.userInfoMapper(mapper)))
-                .tokenEndpoint(token -> token.accessTokenResponseHandler(jwtCookieResponseHandler));
+                .tokenEndpoint(token -> token
+                        .accessTokenResponseHandler(jwtCookieResponseHandler));
+
 
         http.securityMatcher(configurer.getEndpointsMatcher())
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/auth/login"))
+                        .authenticationEntryPoint(
+                                new LoginUrlAuthenticationEntryPoint("/auth/login")
+                        )
                 )
-                .csrf(csrf -> csrf.ignoringRequestMatchers(configurer.getEndpointsMatcher()))
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers(configurer.getEndpointsMatcher())
+                )
                 .headers(h -> h
-                        .contentTypeOptions(c -> {})
                         .frameOptions(f -> f.sameOrigin())
-                        // enable HSTS only in HTTPS production (you can gate by profile)
-                        .httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).preload(true))
-                );
-
-        http
+                        .contentTypeOptions(Customizer.withDefaults())
+                        .httpStrictTransportSecurity(hsts ->
+                                hsts.includeSubDomains(true).preload(true)
+                        )
+                )
                 .cors(Customizer.withDefaults());
 
         return http.build();
     }
 
-    // 2) ADMIN UI (browser) -> redirect to login
+    // ------------------------------------------------
+    // 2) ADMIN APIs (ROLE_ADMIN required)
+    // ------------------------------------------------
     @Bean
     @Order(2)
-    SecurityFilterChain adminChain(HttpSecurity http, JwtCookieFilter jwtCookieFilter) throws Exception {
+    SecurityFilterChain adminChain(
+            HttpSecurity http,
+            CookieBearerTokenResolver resolver,
+            JwtAuthConverterConfig jwtAuthConverterConfig
+    ) throws Exception {
 
-        http.securityMatcher("/admin/**")
-                .addFilterBefore(jwtCookieFilter, UsernamePasswordAuthenticationFilter.class)
-                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+        http
+                .securityMatcher("/api/admin/**")
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.POST, "/api/admin/users/service").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/admin/users/service").permitAll()
+                        .anyRequest().hasRole("SAS_ADMIN")
+                )
+
+                .oauth2ResourceServer(oauth -> oauth
+                        .bearerTokenResolver(resolver)
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(
+                                jwtAuthConverterConfig.jwtAuthenticationConverter()
+                        ))
+                )
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(
                         new LoginUrlAuthenticationEntryPoint("/auth/login")
                 ))
-                // If admin has forms, prefer CSRF ENABLED and use proper CSRF tokens
-                .csrf(csrf -> csrf.disable());
-
-        http
+                .sessionManagement(sm ->
+                        sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults());
 
         return http.build();
     }
 
-    // 3) API -> 401 (no redirect)
+    // ------------------------------------------------
+    // 3) APPLICATION APIs
+    // ------------------------------------------------
     @Bean
     @Order(3)
-    SecurityFilterChain apiChain(HttpSecurity http, JwtCookieFilter jwtCookieFilter) throws Exception {
+    SecurityFilterChain apiChain(HttpSecurity http,
+                                 CookieBearerTokenResolver resolver, JwtAuthConverterConfig jwtAuthConverterConfig) throws Exception {
 
         http.securityMatcher("/api/**")
-                .addFilterBefore(jwtCookieFilter, UsernamePasswordAuthenticationFilter.class)
-                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+                .authorizeHttpRequests(auth -> auth
+                        .anyRequest().authenticated()
+                )
+                .oauth2ResourceServer(oauth -> oauth
+                        .bearerTokenResolver(resolver)
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverterConfig.jwtAuthenticationConverter()))
+                )
                 .exceptionHandling(ex -> ex.authenticationEntryPoint((req, res, e) -> {
                     res.setStatus(401);
                     res.setContentType("application/json");
                     res.getWriter().write("{\"error\":\"unauthorized\"}");
                 }))
-                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .csrf(csrf -> csrf.disable());
+                .sessionManagement(sm ->
+                        sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults());
 
         return http.build();
     }
 
+    // ------------------------------------------------
+    // PASSWORD ENCODER
+    // ------------------------------------------------
     @Bean
     PasswordEncoder encoder() {
         return new BCryptPasswordEncoder(12);
     }
 
-    @Bean
-    public JwtCookieFilter jwtCookieFilter(org.springframework.security.oauth2.jwt.JwtDecoder jwtDecoder) {
-        return new JwtCookieFilter(jwtDecoder);
-    }
-
-
+    // ------------------------------------------------
+    // DYNAMIC CORS
+    // ------------------------------------------------
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
@@ -169,12 +209,29 @@ public class SecurityConfiguration {
         };
     }
 
-
+    // ------------------------------------------------
+    // AUTH SERVER SETTINGS
+    // ------------------------------------------------
     @Bean
     AuthorizationServerSettings authorizationServerSettings() {
         return AuthorizationServerSettings.builder()
-                // PRODUCTION: set to real public issuer URL
                 .issuer("https://localhost:9443")
                 .build();
+    }
+
+
+    @Bean
+    public AuthenticationProvider authenticationProvider(
+            UserRepository userRepository,
+            UserDetailsService userDetailsService,
+            PasswordEncoder passwordEncoder) {
+
+        ClientAwareAuthenticationProvider provider =
+                new ClientAwareAuthenticationProvider(userRepository);
+
+        provider.setUserDetailsService(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder);
+
+        return provider;
     }
 }

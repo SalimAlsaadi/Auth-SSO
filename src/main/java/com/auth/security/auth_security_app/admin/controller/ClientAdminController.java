@@ -52,6 +52,7 @@ public class ClientAdminController {
                 .clientSettings(ClientSettings.builder()
                         .requireProofKey(r.requireProofKey())
                         .requireAuthorizationConsent(false)
+                        .setting("allowed_origins", r.allowedOrigins())
                         .build())
                 .tokenSettings(TokenSettings.builder()
                         .accessTokenTimeToLive(Duration.ofMinutes(15))
@@ -71,6 +72,7 @@ public class ClientAdminController {
             @JsonProperty("redirectUris") List<String> redirectUris,
             @JsonProperty("postLogoutRedirectUris") List<String> postLogoutRedirectUris,
             @JsonProperty("scopes") List<String> scopes,
-            @JsonProperty("requireProofKey") boolean requireProofKey
+            @JsonProperty("requireProofKey") boolean requireProofKey,
+            @JsonProperty("allowedOrigins") List<String> allowedOrigins
     ) {}
 }

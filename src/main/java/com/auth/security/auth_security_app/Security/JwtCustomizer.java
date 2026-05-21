@@ -48,7 +48,7 @@ public class JwtCustomizer implements OAuth2TokenCustomizer<JwtEncodingContext> 
         List<String> roles = context.getPrincipal()
                 .getAuthorities()
                 .stream()
-                .map(a -> a.getAuthority())
+                .map(a -> a.getAuthority().startsWith("ROLE_") ? a.getAuthority() : "ROLE_" + a.getAuthority())
                 .toList();
 
         claims.claim("roles", roles);

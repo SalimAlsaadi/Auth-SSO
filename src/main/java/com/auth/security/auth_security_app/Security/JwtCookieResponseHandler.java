@@ -13,12 +13,22 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.time.Instant;
 
+/*This class:
+
+👉 Runs ONLY when /oauth2/token succeeds
+👉 Takes the generated JWT
+👉 Writes it into a cookie
+
+It handles writing the token into cookie.
+
+ */
+
+
 @Component
 public class JwtCookieResponseHandler implements AuthenticationSuccessHandler {
 
     private final CookieHandler cookieHandler;
-    private final OAuth2AccessTokenResponseAuthenticationSuccessHandler delegate =
-            new OAuth2AccessTokenResponseAuthenticationSuccessHandler();
+    private final OAuth2AccessTokenResponseAuthenticationSuccessHandler delegate = new OAuth2AccessTokenResponseAuthenticationSuccessHandler();
 
     public JwtCookieResponseHandler(CookieHandler cookieHandler) {
         this.cookieHandler = cookieHandler;

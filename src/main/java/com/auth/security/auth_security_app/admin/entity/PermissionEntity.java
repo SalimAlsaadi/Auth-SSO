@@ -1,6 +1,6 @@
 package com.auth.security.auth_security_app.admin.entity;
 
-import com.auth.security.auth_security_app.admin.superClassBaseEntity.BaseEntity;
+import com.auth.security.auth_security_app.admin.superClasses.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 

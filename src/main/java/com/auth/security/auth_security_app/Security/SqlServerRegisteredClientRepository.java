@@ -93,16 +93,15 @@ public class SqlServerRegisteredClientRepository implements RegisteredClientRepo
              authorization_grant_types, redirect_uris,
              post_logout_redirect_uris, scopes,
              require_proof_key, require_authorization_consent,
-             access_token_ttl, refresh_token_ttl, reuse_refresh_tokens)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             access_token_ttl, refresh_token_ttl, reuse_refresh_tokens,
+             allowed_origins)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
                 c.getId(),
                 c.getClientId(),
                 Timestamp.from(issuedAt),
                 c.getClientSecret(),
-                c.getClientSecretExpiresAt() != null
-                        ? Timestamp.from(c.getClientSecretExpiresAt())
-                        : null,
+                c.getClientSecretExpiresAt() != null ? Timestamp.from(c.getClientSecretExpiresAt()) : null,
                 c.getClientName(),
                 join(c.getClientAuthenticationMethods().stream()
                         .map(ClientAuthenticationMethod::getValue)),
@@ -115,7 +114,8 @@ public class SqlServerRegisteredClientRepository implements RegisteredClientRepo
                 c.getClientSettings().isRequireAuthorizationConsent(),
                 c.getTokenSettings().getAccessTokenTimeToLive().toSeconds(),
                 c.getTokenSettings().getRefreshTokenTimeToLive().toSeconds(),
-                c.getTokenSettings().isReuseRefreshTokens()
+                c.getTokenSettings().isReuseRefreshTokens(),
+                joinAllowedOrigins(c)
         );
     }
 
@@ -211,5 +211,20 @@ public class SqlServerRegisteredClientRepository implements RegisteredClientRepo
         for (String v : csv.split(",")) {
             consumer.accept(v.trim());
         }
+    }
+
+    private String joinAllowedOrigins(RegisteredClient c) {
+        Object origins = c.getClientSettings().getSetting("allowed_origins");
+
+        if (origins instanceof List<?> list) {
+            return list.stream()
+                    .map(Object::toString)
+                    .map(String::trim)
+                    .distinct()
+                    .reduce((a, b) -> a + "," + b)
+                    .orElse(null);
+        }
+
+        return null;
     }
 }

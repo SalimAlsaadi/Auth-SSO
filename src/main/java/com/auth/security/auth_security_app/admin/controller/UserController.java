@@ -2,6 +2,7 @@ package com.auth.security.auth_security_app.admin.controller;
 
 import com.auth.security.auth_security_app.admin.dto.userDTO.*;
 import com.auth.security.auth_security_app.admin.service.Interface.UserService;
+import com.auth.security.auth_security_app.admin.superClasses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -9,22 +10,50 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/admin/users")
+@RequestMapping("/api/admin/users")
 @RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
 
-    @PostMapping
-    public ResponseEntity<UserResponseDTO> create(@RequestBody UserPublicRegistrationDTO request) {
-        return ResponseEntity.ok(userService.registerExternalUser(request));
-    }
+//    @PostMapping
+//    public ResponseEntity<UserResponseDTO> create(@RequestBody UserPublicRegistrationDTO request) {
+//        return ResponseEntity.ok(userService.registerExternalUser(request));
+//    }
 
     @PostMapping("/service")
-    public ResponseEntity<Long> registerFromExternalSystems(@RequestBody ServiceRegistrationDTO request) {
+    public ResponseEntity<ApiResponse<Long>> registerFromExternalSystems(@RequestBody ServiceRegistrationDTO request) {
 
-        return ResponseEntity.ok(userService.registerFromService(request).getUserId());
+        ApiResponse<UserResponseDTO> result = userService.registerFromService(request);
+
+        if (!result.isSuccess()) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(false, result.getMessage(), null));
+        }
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "User created", result.getData().getUserId()));
     }
+
+    @PutMapping("/service")
+    public ResponseEntity<ApiResponse<Long>> updateFromExternalSystems(@RequestBody ServiceRegistrationDTO request) {
+
+        ApiResponse<UserResponseDTO> result = userService.updateFromService(request);
+
+        if (!result.isSuccess()) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(false, result.getMessage(), null));
+        }
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "User updated", result.getData().getUserId()));
+    }
+
+
+
+    @PostMapping("/createAdmins")
+    public ResponseEntity<ApiResponse<UserResponseDTO>> createAdmins(@RequestBody UserRequestDTO dto){
+        return ResponseEntity.ok(userService.create(dto));
+    }
+
 
     @PutMapping("/updateUserDetails")
     public ResponseEntity<UserResponseDTO> update(@RequestBody UserRequestDTO request) {
