@@ -4,71 +4,229 @@
     <meta charset="UTF-8" />
     <title>Login | Authorization Server</title>
 
-    <!-- TailwindCSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+            rel="stylesheet"
+    />
+
+    <link
+            href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded"
+            rel="stylesheet"
+    />
 
     <style>
-        body {
-            background: linear-gradient(135deg, #2052a3, #0b1c33);
-            font-family: 'Inter', sans-serif;
+        * {
+          box-sizing: border-box;
         }
 
-        .card {
-            background: white;
-            border-radius: 0.75rem;
-            box-shadow: 0 0 25px rgba(0,0,0,0.15);
+        body {
+          margin: 0;
+          min-height: 100vh;
+          font-family: "Inter", sans-serif;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          background:
+            radial-gradient(circle at 18% 8%, #d92fd4 0%, transparent 32%),
+            radial-gradient(circle at 78% 72%, #3fb8e8 0%, transparent 38%),
+            radial-gradient(circle at 52% 58%, #3437d8 0%, transparent 35%),
+            linear-gradient(135deg, #090d1a 0%, #10142b 55%, #07111f 100%);
+        }
+
+       .login-card {
+  width: 640px;
+  min-height: 500px;
+  padding: 48px 74px 54px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(26px);
+  -webkit-backdrop-filter: blur(26px);
+  text-align: center;
+  color: white;
+}
+
+        .logo {
+  width: 250px;
+  height: auto;
+  max-height: 250px;
+  margin: 0 auto 10px;
+  object-fit: contain;
+  display: block;
+}
+
+h1 {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.8px;
+  line-height: 1.15;
+}
+
+.signup-text {
+  margin: 12px 0 42px;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.82);
+  font-weight: 500;
+}
+
+        .signup-text a {
+          color: white;
+          font-weight: 700;
+          text-decoration: underline;
+        }
+
+        .error-box {
+          margin-bottom: 20px;
+          padding: 12px 16px;
+          border-radius: 14px;
+          background: rgba(239, 68, 68, 0.18);
+          border: 1px solid rgba(248, 113, 113, 0.35);
+          color: #ffffff;
+          font-size: 14px;
+          text-align: left;
+        }
+
+        .input-group {
+          position: relative;
+          margin-bottom: 22px;
+        }
+
+        .input-group .material-symbols-rounded {
+          position: absolute;
+          left: 18px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: rgba(255, 255, 255, 0.78);
+          font-size: 25px;
+        }
+
+        .input-group input {
+          width: 100%;
+          height: 54px;
+          border-radius: 999px;
+          border: 1px solid rgba(255, 255, 255, 0.22);
+          background: rgba(255, 255, 255, 0.17);
+          color: white;
+          padding: 0 22px 0 58px;
+          font-size: 17px;
+          font-weight: 600;
+          outline: none;
+          box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.08);
+        }
+
+        .input-group input::placeholder {
+          color: rgba(255, 255, 255, 0.78);
+        }
+
+        .input-group input:focus {
+          border-color: rgba(255, 255, 255, 0.55);
+          background: rgba(255, 255, 255, 0.22);
+        }
+
+        .signin-btn {
+          width: 100%;
+          height: 54px;
+          margin-top: 14px;
+          border: none;
+          border-radius: 999px;
+          background: #020617;
+          color: white;
+          font-size: 17px;
+          font-weight: 800;
+          cursor: pointer;
+          transition: 0.2s ease;
+        }
+
+        .signin-btn:hover {
+          transform: translateY(-2px);
+          background: #000000;
+          box-shadow: 0 16px 34px rgba(0, 0, 0, 0.28);
+        }
+
+        .forgot-link {
+          display: inline-block;
+          margin-top: 54px;
+          color: rgba(255, 255, 255, 0.86);
+          font-size: 16px;
+          font-weight: 600;
+          text-decoration: none;
+        }
+
+        .forgot-link:hover {
+          color: white;
+          text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+          .login-card {
+            width: calc(100% - 32px);
+            padding: 42px 26px;
+          }
+
+          h1 {
+            font-size: 28px;
+          }
         }
     </style>
 </head>
 
-<body class="min-h-screen flex items-center justify-center">
+<body>
 
-<div class="card w-[430px] p-8">
+<div class="login-card">
 
-    <!-- Header -->
-    <div class="text-center mb-8">
-        <img th:src="@{/logo.png}" class="w-20 mx-auto mb-3" alt="Logo"/>
-        <h2 class="text-2xl font-bold text-gray-800">Authorization Server</h2>
-        <p class="text-gray-500 text-sm">Single Sign-On Login</p>
-    </div>
+    <img th:src="@{/logoSAS.png}" class="logo" alt="Secure Auth Logo" />
+    <h1>Welcome Back</h1>
 
-    <!-- Error Message -->
-    <div th:if="${errorMessage}" class="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">
+    <p class="signup-text">
+        Don't have an account?
+        <a href="#">Sign up</a>
+    </p>
+
+    <div th:if="${errorMessage}" class="error-box">
         <span th:text="${errorMessage}"></span>
     </div>
 
-    <!-- Login Form -->
     <form th:action="@{/perform_login}" method="post">
 
-        <!-- CSRF TOKEN (REQUIRED) -->
-        <input type="hidden"
-               th:name="${_csrf.parameterName}"
-               th:value="${_csrf.token}" />
+        <input
+                type="hidden"
+                th:name="${_csrf.parameterName}"
+                th:value="${_csrf.token}"
+        />
 
-        <div class="mb-4">
-            <label class="block text-gray-700 mb-1">Email</label>
-            <input name="username" type="text" required
-                   class="w-full border rounded px-3 py-2 outline-blue-500" />
+        <div class="input-group">
+            <span class="material-symbols-rounded">person</span>
+            <input
+                    name="username"
+                    type="text"
+                    placeholder="Username"
+                    required
+            />
         </div>
 
-        <div class="mb-6">
-            <label class="block text-gray-700 mb-1">Password</label>
-            <input name="password" type="password" required
-                   class="w-full border rounded px-3 py-2 outline-blue-500" />
+        <div class="input-group">
+            <span class="material-symbols-rounded">lock</span>
+            <input
+                    name="password"
+                    type="password"
+                    placeholder="Password"
+                    required
+            />
         </div>
 
-        <!-- Submit -->
-        <button type="submit"
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded">
-            Sign In
+        <button type="submit" class="signin-btn">
+            Login
         </button>
 
     </form>
 
-    <!-- Footer -->
-    <div class="text-center text-gray-600 text-sm mt-6">
-        © 2025 Authorization Server · SSO Portal
-    </div>
+    <a href="#" class="forgot-link">
+        Forgot Password?
+    </a>
+
 </div>
 
 </body>

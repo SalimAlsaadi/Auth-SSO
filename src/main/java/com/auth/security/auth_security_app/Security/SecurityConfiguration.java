@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -18,6 +19,7 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -129,9 +131,11 @@ public class SecurityConfiguration {
                                 jwtAuthConverterConfig.jwtAuthenticationConverter()
                         ))
                 )
+//                .exceptionHandling(ex -> ex.authenticationEntryPoint(
+//                        new LoginUrlAuthenticationEntryPoint("/auth/login")
+//                ))
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(
-                        new LoginUrlAuthenticationEntryPoint("/auth/login")
-                ))
+                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .sessionManagement(sm ->
                         sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
