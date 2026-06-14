@@ -8,8 +8,13 @@ import org.springframework.stereotype.Component;
 public class CookieHandler {
 
     public static final String COOKIE_NAME = "SAS_TOKEN";
+    public static final String SESSION_COOKIE_NAME = "JSESSIONID";
 
-    public void writeTokenCookie(HttpServletResponse response, String jwt, long maxAgeSeconds) {
+    public void writeTokenCookie(
+            HttpServletResponse response,
+            String jwt,
+            long maxAgeSeconds
+    ) {
 
         ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, jwt)
                 .httpOnly(true)
@@ -22,7 +27,8 @@ public class CookieHandler {
         response.addHeader("Set-Cookie", cookie.toString());
     }
 
-    public void clear(HttpServletResponse response) {
+    public void clearTokenCookie(HttpServletResponse response) {
+
         ResponseCookie expired = ResponseCookie.from(COOKIE_NAME, "")
                 .httpOnly(true)
                 .secure(true)
@@ -32,5 +38,23 @@ public class CookieHandler {
                 .build();
 
         response.addHeader("Set-Cookie", expired.toString());
+    }
+
+    public void clearSessionCookie(HttpServletResponse response) {
+
+        ResponseCookie expired = ResponseCookie.from(SESSION_COOKIE_NAME, "")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("None")
+                .path("/")
+                .maxAge(0)
+                .build();
+
+        response.addHeader("Set-Cookie", expired.toString());
+    }
+
+    public void clearAll(HttpServletResponse response) {
+        clearTokenCookie(response);
+        clearSessionCookie(response);
     }
 }

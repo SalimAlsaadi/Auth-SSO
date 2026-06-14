@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -19,7 +18,6 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -33,13 +31,21 @@ public class SecurityConfiguration {
     private final CustomLoginSuccessHandler successHandler;
     private final JwtCookieResponseHandler jwtCookieResponseHandler;
     private final SqlServerRegisteredClientRepository clientRepository;
+    private final CookieClearingAuthenticationEntryPoint authenticationEntryPoint;
+    private final CookieClearingAccessDeniedHandler accessDeniedHandler;
 
-    public SecurityConfiguration(CustomLoginSuccessHandler successHandler,
-                                 JwtCookieResponseHandler jwtCookieResponseHandler,
-                                 SqlServerRegisteredClientRepository clientRepository) {
+    public SecurityConfiguration(
+            CustomLoginSuccessHandler successHandler,
+            JwtCookieResponseHandler jwtCookieResponseHandler,
+            SqlServerRegisteredClientRepository clientRepository,
+            CookieClearingAuthenticationEntryPoint authenticationEntryPoint,
+            CookieClearingAccessDeniedHandler accessDeniedHandler
+    ) {
         this.successHandler = successHandler;
         this.jwtCookieResponseHandler = jwtCookieResponseHandler;
         this.clientRepository = clientRepository;
+        this.authenticationEntryPoint = authenticationEntryPoint;
+        this.accessDeniedHandler = accessDeniedHandler;
     }
 
     // ------------------------------------------------
@@ -47,20 +53,34 @@ public class SecurityConfiguration {
     // ------------------------------------------------
     @Bean
     @Order(0)
-    SecurityFilterChain loginChain(HttpSecurity http, AuthenticationProvider authenticationProvider) throws Exception {
+    SecurityFilterChain loginChain(
+            HttpSecurity http,
+            AuthenticationProvider authenticationProvider
+    ) throws Exception {
 
-        http.securityMatcher("/auth/login", "/perform_login", "/css/**", "/js/**", "/images/**")
-                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+        http
+                .securityMatcher(
+                        "/auth/login",
+                        "/perform_login",
+                        "/auth/api/session/destroy",
+                        "/css/**",
+                        "/js/**",
+                        "/images/**"
+                )
+                .authorizeHttpRequests(auth -> auth
+                        .anyRequest().permitAll()
+                )
                 .formLogin(form -> form
                         .loginPage("/auth/login")
                         .loginProcessingUrl("/perform_login")
                         .successHandler(successHandler)
                 )
-                .headers(h -> h
-                        .frameOptions(f -> f.sameOrigin())
+                .headers(headers -> headers
+                        .frameOptions(frame -> frame.sameOrigin())
                         .contentTypeOptions(Customizer.withDefaults())
                 )
                 .cors(Customizer.withDefaults());
+
         http.authenticationProvider(authenticationProvider);
 
         return http.build();
@@ -71,8 +91,10 @@ public class SecurityConfiguration {
     // ------------------------------------------------
     @Bean
     @Order(1)
-    SecurityFilterChain authServerChain(HttpSecurity http,
-                                        OidcUserInfoMapper mapper) throws Exception {
+    SecurityFilterChain authServerChain(
+            HttpSecurity http,
+            OidcUserInfoMapper mapper
+    ) throws Exception {
 
         OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
 
@@ -80,12 +102,17 @@ public class SecurityConfiguration {
                 http.getConfigurer(OAuth2AuthorizationServerConfigurer.class);
 
         configurer
-                .oidc(oidc -> oidc.userInfoEndpoint(u -> u.userInfoMapper(mapper)))
+                .oidc(oidc -> oidc
+                        .userInfoEndpoint(userInfo ->
+                                userInfo.userInfoMapper(mapper)
+                        )
+                )
                 .tokenEndpoint(token -> token
-                        .accessTokenResponseHandler(jwtCookieResponseHandler));
+                        .accessTokenResponseHandler(jwtCookieResponseHandler)
+                );
 
-
-        http.securityMatcher(configurer.getEndpointsMatcher())
+        http
+                .securityMatcher(configurer.getEndpointsMatcher())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(
                                 new LoginUrlAuthenticationEntryPoint("/auth/login")
@@ -94,11 +121,12 @@ public class SecurityConfiguration {
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers(configurer.getEndpointsMatcher())
                 )
-                .headers(h -> h
-                        .frameOptions(f -> f.sameOrigin())
+                .headers(headers -> headers
+                        .frameOptions(frame -> frame.sameOrigin())
                         .contentTypeOptions(Customizer.withDefaults())
-                        .httpStrictTransportSecurity(hsts ->
-                                hsts.includeSubDomains(true).preload(true)
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .includeSubDomains(true)
+                                .preload(true)
                         )
                 )
                 .cors(Customizer.withDefaults());
@@ -107,7 +135,7 @@ public class SecurityConfiguration {
     }
 
     // ------------------------------------------------
-    // 2) ADMIN APIs (ROLE_ADMIN required)
+    // 2) ADMIN APIs
     // ------------------------------------------------
     @Bean
     @Order(2)
@@ -120,24 +148,28 @@ public class SecurityConfiguration {
         http
                 .securityMatcher("/api/admin/**")
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/api/admin/users/service").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/api/admin/users/service").permitAll()
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/admin/users/service"
+                        ).permitAll()
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/admin/users/service"
+                        ).permitAll()
                         .anyRequest().hasRole("SAS_ADMIN")
                 )
-
                 .oauth2ResourceServer(oauth -> oauth
                         .bearerTokenResolver(resolver)
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(
                                 jwtAuthConverterConfig.jwtAuthenticationConverter()
                         ))
                 )
-//                .exceptionHandling(ex -> ex.authenticationEntryPoint(
-//                        new LoginUrlAuthenticationEntryPoint("/auth/login")
-//                ))
-                .exceptionHandling(ex -> ex.authenticationEntryPoint(
-                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
-                .sessionManagement(sm ->
-                        sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
+                )
+                .sessionManagement(sm -> sm
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults());
@@ -150,24 +182,29 @@ public class SecurityConfiguration {
     // ------------------------------------------------
     @Bean
     @Order(3)
-    SecurityFilterChain apiChain(HttpSecurity http,
-                                 CookieBearerTokenResolver resolver, JwtAuthConverterConfig jwtAuthConverterConfig) throws Exception {
+    SecurityFilterChain apiChain(
+            HttpSecurity http,
+            CookieBearerTokenResolver resolver,
+            JwtAuthConverterConfig jwtAuthConverterConfig
+    ) throws Exception {
 
-        http.securityMatcher("/api/**")
+        http
+                .securityMatcher("/api/**")
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth -> oauth
                         .bearerTokenResolver(resolver)
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverterConfig.jwtAuthenticationConverter()))
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(
+                                jwtAuthConverterConfig.jwtAuthenticationConverter()
+                        ))
                 )
-                .exceptionHandling(ex -> ex.authenticationEntryPoint((req, res, e) -> {
-                    res.setStatus(401);
-                    res.setContentType("application/json");
-                    res.getWriter().write("{\"error\":\"unauthorized\"}");
-                }))
-                .sessionManagement(sm ->
-                        sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
+                )
+                .sessionManagement(sm -> sm
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults());
@@ -194,16 +231,41 @@ public class SecurityConfiguration {
             String origin = request.getHeader("Origin");
 
             CorsConfiguration config = new CorsConfiguration();
+
             config.setAllowCredentials(true);
-            config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-            config.setAllowedHeaders(List.of("*"));
-            config.setExposedHeaders(List.of("Authorization"));
+            config.setAllowedMethods(
+                    List.of(
+                            "GET",
+                            "POST",
+                            "PUT",
+                            "PATCH",
+                            "DELETE",
+                            "OPTIONS"
+                    )
+            );
+
+            config.setAllowedHeaders(
+                    List.of(
+                            "Authorization",
+                            "Content-Type",
+                            "Accept",
+                            "Origin",
+                            "X-Requested-With"
+                    )
+            );
+
+            config.setExposedHeaders(
+                    List.of(
+                            "Set-Cookie"
+                    )
+            );
 
             if (origin == null) {
                 return config;
             }
 
-            List<String> allowedOrigins = clientRepository.findAllAllowedOrigins();
+            List<String> allowedOrigins =
+                    clientRepository.findAllAllowedOrigins();
 
             if (allowedOrigins.contains(origin)) {
                 config.setAllowedOrigins(List.of(origin));
@@ -223,12 +285,12 @@ public class SecurityConfiguration {
                 .build();
     }
 
-
     @Bean
     public AuthenticationProvider authenticationProvider(
             UserRepository userRepository,
             UserDetailsService userDetailsService,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder
+    ) {
 
         ClientAwareAuthenticationProvider provider =
                 new ClientAwareAuthenticationProvider(userRepository);

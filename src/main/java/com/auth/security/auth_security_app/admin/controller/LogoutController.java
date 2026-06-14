@@ -73,7 +73,7 @@ public class LogoutController {
     ) {
 
         // Clear custom JWT / SAS cookie
-        cookieHandler.clear(response);
+        cookieHandler.clearAll(response);
 
         // Clear Spring Security context
         SecurityContextHolder.clearContext();
